@@ -1,0 +1,28 @@
+# AGENTS.md
+
+## Project Overview
+
+Build a bookmark web service for @iwate.
+
+* Single user usage
+* Save page URL, thumbnail image URL, and user's comments from web pages
+* Display saved data on public web pages and provide RSS feed access
+* Host on Cloudflare Workers with Cloudflare D1 for persistence
+* Use Hono as server framework with vanilla HTML/JS/CSS
+
+# Philosophy
+
+* Avoid excessive decoration.
+* Prioritizing stability over novelty. 
+* Choosing a method that will function without maintenance and remain problem-free even 10 years from now.
+
+## Policies
+
+* `docs/development-policy.md`: Coding standards, branching strategy, commit message conventions
+* `docs/testing-policy.md`: Testing strategy, coverage targets
+* `docs/review-policy.md`: Code review criteria, checklists
+
+## Boundaries
+
+* Do not modify or commit `.env*` files
+* Only allow `wrangler setup/dev/d1/websearch` subcommands; no other subcommands permitted
