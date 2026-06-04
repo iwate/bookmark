@@ -6,13 +6,30 @@
 	"image": "mcr.microsoft.com/devcontainers/javascript-node:4-24-trixie",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1.1.0": {}
+	},
+
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
+	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"LOCAL_GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/password)\" > .devcontainer/.envcache/token.env",
+	"runArgs": [
+		"--env-file", "${localWorkspaceFolder}/.devcontainer/.envcache/token.env"
+	],
+	"containerEnv": {
+		"GH_TOKEN": "${localEnv:LOCAL_GH_TOKEN}"
+	},
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install -g wrangler@4.97.0"
+	"postCreateCommand": "rm -rf .devcontainer/.envcache && npm install -g wrangler@4.97.0",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.vscode-websearchforcopilot"
+			]
+		}
+	}
 
 	// Configure tool-specific properties.
 	// "customizations": {},
