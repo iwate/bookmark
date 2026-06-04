@@ -1,0 +1,12 @@
+{
+  "name": "bookmark",
+  "version": "1.0.0",
+  "description": "A bookmark manager for me.",
+  "license": "0BSD",
+  "author": "iwate",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
