@@ -14,15 +14,12 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
-	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"LOCAL_GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/password)\" > .devcontainer/.envcache/token.env",
+	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/credential)\" > .devcontainer/.env",
 	"runArgs": [
-		"--env-file", "${localWorkspaceFolder}/.devcontainer/.envcache/token.env"
+		"--env-file", "${localWorkspaceFolder}/.devcontainer/.env"
 	],
-	"containerEnv": {
-		"GH_TOKEN": "${localEnv:LOCAL_GH_TOKEN}"
-	},
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "rm -rf .devcontainer/.envcache && npm install -g wrangler@4.97.0",
+	"postCreateCommand": "rm -f .devcontainer/.env && npm install -g wrangler@4.97.0",
 	"customizations": {
 		"vscode": {
 			"extensions": [
