@@ -22,7 +22,7 @@ function normalizeText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function validateHttpUrl(value: string, field: ValidationError['field']): ValidationError | null {
+export function validateHttpUrl(value: string, field: ValidationError['field']): ValidationError | null {
   if (value.length > MAX_URL_LENGTH) {
     return { field, message: `must be ${MAX_URL_LENGTH} characters or fewer` };
   }

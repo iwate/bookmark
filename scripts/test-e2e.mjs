@@ -60,6 +60,14 @@ async function runE2eChecks() {
   const indexResponse = await fetch(`${BASE_URL}/`);
   assert.equal(indexResponse.status, 200, 'GET / should return 200');
 
+  const metadataBadUrlResponse = await fetch(`${BASE_URL}/bookmarks/metadata`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url: 'ftp://example.com/not-allowed' }),
+  });
+  assert.equal(metadataBadUrlResponse.status, 400, 'POST /bookmarks/metadata should reject invalid URL');
+  assert.equal(await metadataBadUrlResponse.text(), 'url must use http or https');
+
   const postResponse = await fetch(`${BASE_URL}/bookmarks`, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },

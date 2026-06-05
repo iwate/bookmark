@@ -60,8 +60,15 @@ npm run test:e2e
 
 - `GET /`: render bookmark list and forms
 - `GET /rss.xml`: render RSS feed from current bookmarks
+- `POST /bookmarks/metadata`: fetch page metadata (`url`) and return `{ title, thumbnailUrl }` without DB writes
 - `POST /bookmarks`: create a bookmark (`url`, `title`, `thumbnailUrl`, `comment`, `secret`)
 - `POST /bookmarks/:id/update`: update an existing bookmark (`url`, `title`, `thumbnailUrl`, `comment`, `secret`)
 - `POST /bookmarks/:id/delete`: delete an existing bookmark (`secret`)
 
 All write routes require a valid `WRITE_SECRET` and return `403` when authentication fails.
+
+`POST /bookmarks/metadata` is read-only and does not require `WRITE_SECRET`. The form calls this endpoint on URL blur, auto-filling only empty `Title` and `Thumbnail URL` fields. Metadata failures are non-fatal and manual form submission still works.
+
+For SSRF hardening, metadata fetch performs host validation on both the requested URL and every redirect target. Before each upstream request, it resolves A/AAAA records via DNS-over-HTTPS and rejects requests if any resolved address is loopback/private/link-local/unspecified/multicast/documentation/reserved.
+
+Cloudflare Workers cannot pin the outbound TCP connection to a specific resolved IP, so perfect DNS rebinding prevention is not possible in-process. As compensating controls, this app uses manual redirect handling with per-hop re-validation, strict scheme/host checks, and short upstream timeouts.

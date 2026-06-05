@@ -17,7 +17,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
   assert.ok(html.includes('&lt;script&gt;'));
   assert.ok(html.includes('&lt;b&gt;comment&lt;/b&gt;'));
-  assert.ok(!html.includes('<script>'));
+  assert.ok(!html.includes('https://example.com/?q=<script>'));
 }
 
 {
@@ -99,4 +99,109 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
   assert.equal((html.match(/<form\b/g) ?? []).length, 1);
   assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
   assert.ok(!html.includes('should-not-appear'));
+}
+
+{
+  const html = renderIndexPage({ bookmarks: [] });
+  assert.ok(html.includes('id="metadata-status"'));
+  assert.ok(html.includes("fetch('/bookmarks/metadata'"));
+  assert.ok(html.includes('Metadata fetch failed. You can continue with manual input.'));
+  assert.ok(html.includes('lastSuccessfulUrl'));
+}
+
+{
+  const html = renderIndexPage({ bookmarks: [] });
+  const scriptMatch = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/i);
+  assert.ok(scriptMatch, 'page should include inline metadata script');
+
+  class MockInput {
+    value = '';
+    private listeners: Record<string, Array<() => void>> = {};
+
+    addEventListener(type: string, listener: () => void): void {
+      this.listeners[type] ??= [];
+      this.listeners[type].push(listener);
+    }
+
+    dispatch(type: string): void {
+      for (const listener of this.listeners[type] ?? []) {
+        listener();
+      }
+    }
+  }
+
+  class MockForm {
+    private listeners: Record<string, Array<() => void>> = {};
+    urlInput = new MockInput();
+    titleInput = new MockInput();
+    thumbnailInput = new MockInput();
+
+    querySelector(selector: string): unknown {
+      if (selector === 'input[name="url"]') {
+        return this.urlInput;
+      }
+      if (selector === 'input[name="title"]') {
+        return this.titleInput;
+      }
+      if (selector === 'input[name="thumbnailUrl"]') {
+        return this.thumbnailInput;
+      }
+      return null;
+    }
+
+    addEventListener(type: string, listener: () => void): void {
+      this.listeners[type] ??= [];
+      this.listeners[type].push(listener);
+    }
+  }
+
+  class MockElement {
+    textContent = '';
+    classList = {
+      toggle: (_name: string, _enabled: boolean) => {},
+    };
+  }
+
+  const form = new MockForm();
+  const statusNode = new MockElement();
+  form.urlInput.value = 'https://example.com/retry';
+
+  const originalDocument = globalThis.document;
+  const originalFetch = globalThis.fetch;
+  const originalHTMLFormElement = globalThis.HTMLFormElement;
+  const originalHTMLInputElement = globalThis.HTMLInputElement;
+  const originalHTMLElement = globalThis.HTMLElement;
+
+  let fetchCalls = 0;
+
+  globalThis.HTMLFormElement = MockForm as unknown as typeof HTMLFormElement;
+  globalThis.HTMLInputElement = MockInput as unknown as typeof HTMLInputElement;
+  globalThis.HTMLElement = MockElement as unknown as typeof HTMLElement;
+  globalThis.document = {
+    querySelector: (selector: string) => (selector === '#editor form' ? form : null),
+    getElementById: (id: string) => (id === 'metadata-status' ? statusNode : null),
+  } as unknown as Document;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    return new Response('upstream down', { status: 502 });
+  }) as typeof fetch;
+
+  try {
+    assert.ok(scriptMatch[1], 'inline script body must be present');
+    const runInlineScript = new Function(scriptMatch[1]);
+    runInlineScript();
+
+    form.urlInput.dispatch('blur');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    form.urlInput.dispatch('blur');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(fetchCalls, 2);
+  } finally {
+    globalThis.document = originalDocument;
+    globalThis.fetch = originalFetch;
+    globalThis.HTMLFormElement = originalHTMLFormElement;
+    globalThis.HTMLInputElement = originalHTMLInputElement;
+    globalThis.HTMLElement = originalHTMLElement;
+  }
 }

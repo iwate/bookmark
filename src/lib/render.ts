@@ -119,6 +119,8 @@ export function renderIndexPage(input: RenderPageInput): string {
       .button-secondary { background: #4b5563; }
       .form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
       .errors { margin: 0; padding-left: 1.2rem; color: #b91c1c; }
+      .metadata-status { margin: 0; color: #6b7280; min-height: 1.25rem; }
+      .metadata-status.error { color: #b91c1c; }
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
       .bookmark-title { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
@@ -145,15 +147,16 @@ export function renderIndexPage(input: RenderPageInput): string {
         <form method="post" action="${formAction}">
           <label>
             URL
-            <input type="url" name="url" required value="${escapeHtml(values.url)}">
+            <input type="url" name="url" required value="${escapeHtml(values.url)}" autocomplete="url">
           </label>
+          <p id="metadata-status" class="metadata-status" aria-live="polite"></p>
           <label>
             Title
-            <input type="text" name="title" maxlength="300" value="${escapeHtml(values.title)}">
+            <input type="text" name="title" maxlength="300" value="${escapeHtml(values.title)}" autocomplete="off">
           </label>
           <label>
             Thumbnail URL
-            <input type="url" name="thumbnailUrl" value="${escapeHtml(values.thumbnailUrl)}">
+            <input type="url" name="thumbnailUrl" value="${escapeHtml(values.thumbnailUrl)}" autocomplete="off">
           </label>
           <label>
             Comment
@@ -188,6 +191,98 @@ export function renderIndexPage(input: RenderPageInput): string {
         </ol>
       </section>
     </main>
+    <script>
+      (() => {
+        const form = document.querySelector('#editor form');
+        if (!(form instanceof HTMLFormElement)) {
+          return;
+        }
+
+        const urlInput = form.querySelector('input[name="url"]');
+        const titleInput = form.querySelector('input[name="title"]');
+        const thumbnailInput = form.querySelector('input[name="thumbnailUrl"]');
+        const statusNode = document.getElementById('metadata-status');
+
+        if (!(urlInput instanceof HTMLInputElement) || !(titleInput instanceof HTMLInputElement) || !(thumbnailInput instanceof HTMLInputElement)) {
+          return;
+        }
+
+        let pendingController = null;
+        let pendingUrl = '';
+        let lastSuccessfulUrl = '';
+
+        const setStatus = (message, isError) => {
+          if (!(statusNode instanceof HTMLElement)) {
+            return;
+          }
+          statusNode.textContent = message;
+          statusNode.classList.toggle('error', Boolean(isError));
+        };
+
+        const shouldAutofill = () => titleInput.value.trim() === '' || thumbnailInput.value.trim() === '';
+
+        const fetchMetadata = async () => {
+          const url = urlInput.value.trim();
+          if (!url || !shouldAutofill() || url === lastSuccessfulUrl) {
+            return;
+          }
+          if (pendingController && pendingUrl === url) {
+            return;
+          }
+
+          if (pendingController) {
+            pendingController.abort();
+          }
+          pendingController = new AbortController();
+          pendingUrl = url;
+
+          setStatus('Fetching metadata...', false);
+
+          try {
+            const response = await fetch('/bookmarks/metadata', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ url }),
+              signal: pendingController.signal,
+            });
+
+            if (!response.ok) {
+              const text = (await response.text()).trim();
+              throw new Error(text || 'metadata fetch failed');
+            }
+
+            const data = await response.json();
+            if (titleInput.value.trim() === '' && typeof data.title === 'string' && data.title.trim() !== '') {
+              titleInput.value = data.title.trim();
+            }
+            if (thumbnailInput.value.trim() === '' && typeof data.thumbnailUrl === 'string' && data.thumbnailUrl.trim() !== '') {
+              thumbnailInput.value = data.thumbnailUrl.trim();
+            }
+
+            lastSuccessfulUrl = url;
+            setStatus('', false);
+          } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+              return;
+            }
+            setStatus('Metadata fetch failed. You can continue with manual input.', true);
+          } finally {
+            if (pendingUrl === url) {
+              pendingUrl = '';
+              pendingController = null;
+            }
+          }
+        };
+
+        urlInput.addEventListener('blur', () => {
+          void fetchMetadata();
+        });
+
+        form.addEventListener('submit', () => {
+          setStatus('', false);
+        });
+      })();
+    </script>
   </body>
 </html>`;
 }
