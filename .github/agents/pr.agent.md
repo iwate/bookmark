@@ -32,6 +32,7 @@ If required runtime startup or manual smoke checks fail, do not create the PR. R
 
 - Include the related Issue number if applicable (e.g., `Closes #<number>`)
 - Leave a comment on the GitHub Issue if additional commentary is needed.
+- Write in English and maintain a professional tone in all communications.
 
 ## Tools
 
