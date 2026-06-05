@@ -9,3 +9,7 @@ required = ["WRITE_SECRET"]
 binding = "DB"
 database_name = "bookmark"
 database_id = "00000000-0000-0000-0000-000000000000"
+
+[[routes]]
+pattern = "book.example.com"
+custom_domain = true
