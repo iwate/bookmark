@@ -28,9 +28,17 @@ function hasDatabaseBinding(db: unknown): db is D1DatabaseLike {
   return typeof db === 'object' && db !== null && 'prepare' in db && typeof db.prepare === 'function';
 }
 
-function ensureRuntimeConfig(c: { env: Partial<Env> }) {
+function ensureReadRuntimeConfig(c: { env: Partial<Env> }) {
   if (!hasDatabaseBinding(c.env.DB)) {
     return new Response('server misconfigured', { status: 500 });
+  }
+  return null;
+}
+
+function ensureWriteRuntimeConfig(c: { env: Partial<Env> }) {
+  const dbError = ensureReadRuntimeConfig(c);
+  if (dbError) {
+    return dbError;
   }
   if (typeof c.env.WRITE_SECRET !== 'string' || c.env.WRITE_SECRET.length === 0) {
     return new Response('server misconfigured', { status: 500 });
@@ -94,7 +102,7 @@ function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values
 }
 
 app.get('/', async (c) => {
-  const configError = ensureRuntimeConfig(c);
+  const configError = ensureReadRuntimeConfig(c);
   if (configError) {
     return configError;
   }
@@ -108,7 +116,7 @@ app.get('/', async (c) => {
 });
 
 app.get('/rss.xml', async (c) => {
-  const configError = ensureRuntimeConfig(c);
+  const configError = ensureReadRuntimeConfig(c);
   if (configError) {
     return configError;
   }
@@ -125,7 +133,7 @@ app.get('/rss.xml', async (c) => {
 });
 
 app.post('/bookmarks', async (c) => {
-  const configError = ensureRuntimeConfig(c);
+  const configError = ensureWriteRuntimeConfig(c);
   if (configError) {
     return configError;
   }

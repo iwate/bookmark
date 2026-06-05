@@ -27,11 +27,15 @@ npm install
 WRITE_SECRET=replace-with-a-long-random-secret
 ```
 
+With `WRITE_SECRET` declared as a required secret in `wrangler.toml`, both `WRITE_SECRET=test npm run dev` and `.dev.vars` work for local testing.
+
 4. Run local development server:
 
 ```sh
 npm run dev
 ```
+
+This applies the local D1 migrations automatically before starting Wrangler, so a fresh database no longer needs manual setup.
 
 ## Production setup
 

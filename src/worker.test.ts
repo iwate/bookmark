@@ -48,11 +48,21 @@ function createDbMock() {
 
 {
   const mock = createDbMock();
-  const response = await app.fetch(new Request('https://example.com/'), { DB: mock.db, WRITE_SECRET: 'secret' });
+  const response = await app.fetch(new Request('https://example.com/'), { DB: mock.db } as never);
 
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.ok(html.includes('https://example.com'));
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(new Request('https://example.com/rss.xml'), { DB: mock.db } as never);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'application/rss+xml; charset=utf-8');
+  const rss = await response.text();
+  assert.ok(rss.includes('https://example.com'));
 }
 
 {
@@ -66,8 +76,9 @@ function createDbMock() {
   const mock = createDbMock();
   const response = await app.fetch(new Request('https://example.com/'), { DB: mock.db, WRITE_SECRET: '' });
 
-  assert.equal(response.status, 500);
-  assert.equal(await response.text(), 'server misconfigured');
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.ok(html.includes('https://example.com'));
 }
 
 {
@@ -95,6 +106,21 @@ function createDbMock() {
 
   assert.equal(response.status, 403);
   assert.equal(mock.calls.prepare, 1);
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(
+    new Request('https://example.com/bookmarks', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ url: 'https://example.com' }),
+    }),
+    { DB: mock.db } as never,
+  );
+
+  assert.equal(response.status, 500);
+  assert.equal(await response.text(), 'server misconfigured');
 }
 
 {

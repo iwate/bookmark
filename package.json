@@ -10,7 +10,7 @@
     "test": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest run",
     "test:watch": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest",
     "test:coverage": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest run --coverage",
-    "dev": "wrangler dev src/worker.ts"
+    "dev": "wrangler d1 migrations apply bookmark --local && wrangler dev src/worker.ts"
   },
   "dependencies": {
     "hono": "^4.8.5"
