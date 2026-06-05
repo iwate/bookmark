@@ -10,6 +10,16 @@ type RenderPageInput = {
     comment: string;
     secret: string;
   };
+  editor?: {
+    id: number;
+    values?: {
+      url: string;
+      thumbnailUrl: string;
+      comment: string;
+      secret: string;
+    };
+    errors?: ValidationError[];
+  };
 };
 
 function escapeHtml(value: string): string {
@@ -45,6 +55,7 @@ function renderErrors(errors: ValidationError[]): string {
 }
 
 function renderBookmark(bookmark: Bookmark): string {
+
   const thumbnail = bookmark.thumbnailUrl
     ? `<img src="${escapeHtml(bookmark.thumbnailUrl)}" alt="" loading="lazy" decoding="async">`
     : '';
@@ -59,12 +70,27 @@ function renderBookmark(bookmark: Bookmark): string {
       ${thumbnail}
       ${comment}
       <time datetime="${escapeHtml(bookmark.createdAt)}">${escapeHtml(formatDate(bookmark.createdAt))}</time>
+      <p class="bookmark-action-wrap">
+        <a class="bookmark-action" href="/?edit=${bookmark.id}#editor" aria-label="Edit/Delete entry ${bookmark.id}">Edit/Delete</a>
+      </p>
     </li>
   `;
 }
 
 export function renderIndexPage(input: RenderPageInput): string {
-  const values = input.values ?? { url: '', thumbnailUrl: '', comment: '', secret: '' };
+  const editorValues = input.editor?.values;
+  const sourceValues = editorValues ?? input.values ?? { url: '', thumbnailUrl: '', comment: '', secret: '' };
+  const values = {
+    url: sourceValues.url,
+    thumbnailUrl: sourceValues.thumbnailUrl,
+    comment: sourceValues.comment,
+    secret: '',
+  };
+  const isEditing = typeof input.editor?.id === 'number';
+  const formAction = isEditing ? `/bookmarks/${input.editor?.id}/update` : '/bookmarks';
+  const submitLabel = isEditing ? 'Update' : 'Save';
+  const sectionHeading = isEditing ? 'Edit bookmark' : 'Save a bookmark';
+  const formErrors = isEditing ? input.editor?.errors ?? [] : input.errors ?? [];
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -85,10 +111,15 @@ export function renderIndexPage(input: RenderPageInput): string {
       input, textarea { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.7rem 0.8rem; }
       textarea { min-height: 6rem; resize: vertical; }
       button { border: 0; border-radius: 999px; padding: 0.8rem 1rem; background: #111827; color: #fff; font-weight: 700; width: fit-content; }
+      .button-secondary { background: #4b5563; }
+      .form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
       .errors { margin: 0; padding-left: 1.2rem; color: #b91c1c; }
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
+      .bookmark-action-wrap { margin: 0; text-align: right; }
+      .bookmark-action { color: #1f2937; font-weight: 700; }
+      .cancel-edit { color: #1f2937; font-weight: 700; }
       img { max-width: 100%; height: auto; border-radius: 0.5rem; }
       .comment { margin: 0; white-space: pre-wrap; }
       time { color: #6b7280; font-size: 0.92rem; }
@@ -101,10 +132,11 @@ export function renderIndexPage(input: RenderPageInput): string {
         <h1>Bookmarks</h1>
         <p class="subtle">Newest saved links first.</p>
       </header>
-      <section aria-labelledby="save-heading">
-        <h2 id="save-heading">Save a bookmark</h2>
-        ${renderErrors(input.errors ?? [])}
-        <form method="post" action="/bookmarks">
+      <section id="editor" aria-labelledby="save-heading">
+        <h2 id="save-heading">${sectionHeading}</h2>
+        ${isEditing ? `<p class="subtle">Editing #${input.editor?.id}</p>` : ''}
+        ${renderErrors(formErrors)}
+        <form method="post" action="${formAction}">
           <label>
             URL
             <input type="url" name="url" required value="${escapeHtml(values.url)}">
@@ -121,13 +153,28 @@ export function renderIndexPage(input: RenderPageInput): string {
             Secret
             <input type="password" name="secret" required value="${escapeHtml(values.secret)}">
           </label>
-          <button type="submit">Save</button>
+          <div class="form-actions">
+            <button type="submit">${submitLabel}</button>
+            ${
+              isEditing
+                ? `<button
+                    type="submit"
+                    class="button-secondary"
+                    formaction="/bookmarks/${input.editor?.id}/delete"
+                    formmethod="post"
+                    formnovalidate
+                    onclick="return confirm('Delete this bookmark?');"
+                  >Delete</button>
+                  <a class="cancel-edit" href="/#editor">Cancel edit</a>`
+                : ''
+            }
+          </div>
         </form>
       </section>
       <section aria-labelledby="saved-heading">
         <h2 id="saved-heading">Saved links</h2>
         <ol class="bookmarks">
-          ${input.bookmarks.map(renderBookmark).join('') || '<li>No bookmarks yet.</li>'}
+          ${input.bookmarks.map((bookmark) => renderBookmark(bookmark)).join('') || '<li>No bookmarks yet.</li>'}
         </ol>
       </section>
     </main>

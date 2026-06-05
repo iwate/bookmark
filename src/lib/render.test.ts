@@ -30,3 +30,65 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
   assert.ok(xml.indexOf('https://example.com/2') < xml.indexOf('https://example.com/1'));
 }
+
+{
+  const html = renderIndexPage({
+    bookmarks: [
+      {
+        id: 7,
+        url: 'https://example.com/current',
+        thumbnailUrl: 'https://example.com/current.png',
+        comment: 'current comment',
+        createdAt: '2026-06-05T00:00:00.000Z',
+      },
+    ],
+  });
+
+  assert.ok(html.includes('href="/?edit=7#editor"'));
+  assert.ok(html.includes('Edit/Delete entry 7'));
+  assert.ok(!html.includes('<details>'));
+  assert.ok(!html.includes('action="/bookmarks/7/update"'));
+  assert.ok(!html.includes('action="/bookmarks/7/delete"'));
+}
+
+{
+  const html = renderIndexPage({
+    bookmarks: [
+      {
+        id: 9,
+        url: 'https://example.com/original',
+        thumbnailUrl: '',
+        comment: '',
+        createdAt: '2026-06-05T00:00:00.000Z',
+      },
+    ],
+    editor: {
+      id: 9,
+      values: {
+        url: 'https://example.com/edited',
+        thumbnailUrl: 'https://example.com/thumb.png',
+        comment: 'edited comment',
+        secret: 'should-not-appear',
+      },
+      errors: [
+        { field: 'url', message: 'must be a valid URL' },
+        { field: 'secret', message: 'is invalid' },
+      ],
+    },
+  });
+
+  assert.ok(html.includes('https://example.com/edited'));
+  assert.ok(html.includes('Editing #9'));
+  assert.ok(html.includes('action="/bookmarks/9/update"'));
+  assert.ok(html.includes('formaction="/bookmarks/9/delete"'));
+  assert.ok(html.includes('formmethod="post"'));
+  assert.ok(html.includes('formnovalidate'));
+  assert.ok(html.includes('Update'));
+  assert.ok(html.includes('Delete'));
+  assert.ok(html.includes('Cancel edit'));
+  assert.ok(html.includes('must be a valid URL'));
+  assert.ok(html.includes('is invalid'));
+  assert.equal((html.match(/<form\b/g) ?? []).length, 1);
+  assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
+  assert.ok(!html.includes('should-not-appear'));
+}
