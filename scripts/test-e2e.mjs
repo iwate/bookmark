@@ -7,6 +7,8 @@ const PORT = 8788;
 const BASE_URL = `http://${HOST}:${PORT}`;
 const WRITE_SECRET = 'test-e2e-secret';
 const STARTUP_TIMEOUT_MS = 30_000;
+const READY_CHECK_TIMEOUT_MS = 2_000;
+const SHUTDOWN_TIMEOUT_MS = 8_000;
 
 function runCommand(command, args, env = process.env) {
   return new Promise((resolve, reject) => {
@@ -32,7 +34,9 @@ async function waitForServerReady() {
 
   while (Date.now() - start < STARTUP_TIMEOUT_MS) {
     try {
-      const response = await fetch(`${BASE_URL}/`);
+      const response = await fetch(`${BASE_URL}/`, {
+        signal: AbortSignal.timeout(READY_CHECK_TIMEOUT_MS),
+      });
       if (response.status === 200) {
         return;
       }
@@ -83,15 +87,45 @@ async function terminateProcess(child) {
     return;
   }
 
-  await new Promise((resolve) => {
-    child.once('exit', () => resolve());
-    child.kill('SIGTERM');
+  await new Promise((resolve, reject) => {
+    let done = false;
+    const finish = (error) => {
+      if (done) {
+        return;
+      }
+      done = true;
+      clearTimeout(forceKillTimer);
+      clearTimeout(failTimer);
+      child.removeListener('exit', onExit);
+      child.removeListener('error', onError);
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    };
 
-    setTimeout(() => {
+    const onExit = () => finish();
+    const onError = (error) => finish(error);
+    child.once('exit', onExit);
+    child.once('error', onError);
+
+    const forceKillTimer = setTimeout(() => {
       if (child.exitCode === null) {
         child.kill('SIGKILL');
       }
-    }, 2_000);
+    }, SHUTDOWN_TIMEOUT_MS / 2);
+
+    const failTimer = setTimeout(() => {
+      finish(new Error(`Timed out stopping Wrangler dev server after ${SHUTDOWN_TIMEOUT_MS}ms`));
+    }, SHUTDOWN_TIMEOUT_MS);
+
+    if (child.exitCode !== null) {
+      finish();
+      return;
+    }
+
+    child.kill('SIGTERM');
   });
 }
 
@@ -99,17 +133,31 @@ async function main() {
   await runCommand(WRANGLER_PATH, ['d1', 'migrations', 'apply', 'bookmark', '--local']);
 
   const devServer = spawn(WRANGLER_PATH, ['dev', 'src/worker.ts', '--ip', HOST, '--port', String(PORT)], {
-    env: { ...process.env, WRITE_SECRET },
-    stdio: 'inherit',
+    env: { ...process.env, WRITE_SECRET, CI: '1' },
+    stdio: ['ignore', 'inherit', 'inherit'],
     shell: false,
   });
+
+  let e2eError = null;
 
   try {
     await waitForServerReady();
     await runE2eChecks();
     console.log('e2e checks passed');
+  } catch (error) {
+    e2eError = error;
+    throw error;
   } finally {
-    await terminateProcess(devServer);
+    try {
+      await terminateProcess(devServer);
+    } catch (shutdownError) {
+      if (e2eError) {
+        // Preserve the original e2e failure and log cleanup trouble as secondary context.
+        console.error('Additional cleanup error while stopping Wrangler dev server:', shutdownError);
+      } else {
+        throw shutdownError;
+      }
+    }
   }
 }
 
