@@ -105,6 +105,20 @@ function createDbMock() {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.ok(html.includes('https://example.com'));
+  assert.ok(html.includes('href="/?edit=1#editor"'));
+  assert.ok(!html.includes('<details>'));
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(new Request('https://example.com/?edit=1#editor'), { DB: mock.db } as never);
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.ok(html.includes('Editing #1'));
+  assert.ok(html.includes('action="/bookmarks/1/update"'));
+  assert.ok(html.includes('action="/bookmarks/1/delete"'));
+  assert.ok(html.includes('Cancel edit'));
 }
 
 {
@@ -224,6 +238,7 @@ function createDbMock() {
   const html = await response.text();
   assert.ok(html.includes('is invalid'));
   assert.ok(!html.includes('wrong-secret'));
+  assert.ok(html.includes('Editing #1'));
 }
 
 {
@@ -318,6 +333,7 @@ function createDbMock() {
   const html = await response.text();
   assert.ok(html.includes('is invalid'));
   assert.ok(!html.includes('wrong-secret'));
+  assert.ok(html.includes('Editing #1'));
 }
 
 {

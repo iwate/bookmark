@@ -85,10 +85,16 @@ async function runE2eChecks() {
   const indexAfterCreate = await fetch(`${BASE_URL}/`);
   assert.equal(indexAfterCreate.status, 200, 'GET / after create should return 200');
   const indexAfterCreateBody = await indexAfterCreate.text();
-  const escapedBookmarkUrl = bookmarkUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const idMatch = indexAfterCreateBody.match(new RegExp(`${escapedBookmarkUrl}[\\s\\S]*?action="/bookmarks/(\\d+)/update"`));
-  assert.ok(idMatch, 'Created bookmark should have an update form action with id');
+  const idMatch = indexAfterCreateBody.match(/href="\/\?edit=(\d+)#editor"[^>]*>Edit\/Delete<\/a>/);
+  assert.ok(idMatch, 'Created bookmark should have an Edit/Delete link with id');
   const bookmarkId = idMatch[1];
+
+  const editPageResponse = await fetch(`${BASE_URL}/?edit=${bookmarkId}#editor`);
+  assert.equal(editPageResponse.status, 200, 'GET /?edit=id#editor should return 200');
+  const editPageBody = await editPageResponse.text();
+  assert.ok(editPageBody.includes(`action="/bookmarks/${bookmarkId}/update"`), 'Edit page should set update action on top form');
+  assert.ok(editPageBody.includes(`action="/bookmarks/${bookmarkId}/delete"`), 'Edit page should expose delete action in editor');
+  assert.ok(editPageBody.includes('Cancel edit'), 'Edit page should include cancel control');
 
   const updateResponse = await fetch(`${BASE_URL}/bookmarks/${bookmarkId}/update`, {
     method: 'POST',
