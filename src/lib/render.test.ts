@@ -6,6 +6,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
     bookmarks: [
       {
         id: 1,
+        title: 'Example title',
         url: 'https://example.com/?q=<script>',
         thumbnailUrl: 'https://example.com/image?x="y"',
         comment: '<b>comment</b>',
@@ -22,13 +23,15 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 {
   const xml = renderRssFeed(
     [
-      { id: 2, url: 'https://example.com/2', thumbnailUrl: '', comment: 'second', createdAt: '2026-06-05T01:00:00.000Z' },
-      { id: 1, url: 'https://example.com/1', thumbnailUrl: '', comment: 'first', createdAt: '2026-06-05T00:00:00.000Z' },
+      { id: 2, title: 'Second entry', url: 'https://example.com/2', thumbnailUrl: '', comment: 'second', createdAt: '2026-06-05T01:00:00.000Z' },
+      { id: 1, title: '', url: 'https://example.com/1', thumbnailUrl: '', comment: 'first', createdAt: '2026-06-05T00:00:00.000Z' },
     ],
     'https://bookmark.example',
   );
 
   assert.ok(xml.indexOf('https://example.com/2') < xml.indexOf('https://example.com/1'));
+  assert.ok(xml.includes('<title>Second entry</title>'));
+  assert.ok(xml.includes('<title>https://example.com/1</title>'));
 }
 
 {
@@ -36,6 +39,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
     bookmarks: [
       {
         id: 7,
+        title: 'Current title',
         url: 'https://example.com/current',
         thumbnailUrl: 'https://example.com/current.png',
         comment: 'current comment',
@@ -46,6 +50,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
   assert.ok(html.includes('href="/?edit=7#editor"'));
   assert.ok(html.includes('Edit/Delete entry 7'));
+  assert.ok(html.includes('Current title'));
   assert.ok(!html.includes('<details>'));
   assert.ok(!html.includes('action="/bookmarks/7/update"'));
   assert.ok(!html.includes('action="/bookmarks/7/delete"'));
@@ -56,6 +61,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
     bookmarks: [
       {
         id: 9,
+        title: '',
         url: 'https://example.com/original',
         thumbnailUrl: '',
         comment: '',
@@ -68,6 +74,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
         url: 'https://example.com/edited',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'edited comment',
+        title: 'edited title',
         secret: 'should-not-appear',
       },
       errors: [
@@ -78,6 +85,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
   });
 
   assert.ok(html.includes('https://example.com/edited'));
+  assert.ok(html.includes('edited title'));
   assert.ok(html.includes('Editing #9'));
   assert.ok(html.includes('action="/bookmarks/9/update"'));
   assert.ok(html.includes('formaction="/bookmarks/9/delete"'));

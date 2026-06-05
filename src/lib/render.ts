@@ -8,6 +8,7 @@ type RenderPageInput = {
     url: string;
     thumbnailUrl: string;
     comment: string;
+    title: string;
     secret: string;
   };
   editor?: {
@@ -16,6 +17,7 @@ type RenderPageInput = {
       url: string;
       thumbnailUrl: string;
       comment: string;
+      title: string;
       secret: string;
     };
     errors?: ValidationError[];
@@ -55,6 +57,7 @@ function renderErrors(errors: ValidationError[]): string {
 }
 
 function renderBookmark(bookmark: Bookmark): string {
+  const displayTitle = bookmark.title || bookmark.url;
 
   const thumbnail = bookmark.thumbnailUrl
     ? `<img src="${escapeHtml(bookmark.thumbnailUrl)}" alt="" loading="lazy" decoding="async">`
@@ -66,6 +69,7 @@ function renderBookmark(bookmark: Bookmark): string {
 
   return `
     <li class="bookmark">
+      <p class="bookmark-title">${escapeHtml(displayTitle)}</p>
       <a class="bookmark-url" href="${escapeHtml(bookmark.url)}" rel="noreferrer">${escapeHtml(bookmark.url)}</a>
       ${thumbnail}
       ${comment}
@@ -79,11 +83,12 @@ function renderBookmark(bookmark: Bookmark): string {
 
 export function renderIndexPage(input: RenderPageInput): string {
   const editorValues = input.editor?.values;
-  const sourceValues = editorValues ?? input.values ?? { url: '', thumbnailUrl: '', comment: '', secret: '' };
+  const sourceValues = editorValues ?? input.values ?? { url: '', thumbnailUrl: '', comment: '', title: '', secret: '' };
   const values = {
     url: sourceValues.url,
     thumbnailUrl: sourceValues.thumbnailUrl,
     comment: sourceValues.comment,
+    title: sourceValues.title,
     secret: '',
   };
   const isEditing = typeof input.editor?.id === 'number';
@@ -116,6 +121,7 @@ export function renderIndexPage(input: RenderPageInput): string {
       .errors { margin: 0; padding-left: 1.2rem; color: #b91c1c; }
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
+      .bookmark-title { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
       .bookmark-action-wrap { margin: 0; text-align: right; }
       .bookmark-action { color: #1f2937; font-weight: 700; }
@@ -140,6 +146,10 @@ export function renderIndexPage(input: RenderPageInput): string {
           <label>
             URL
             <input type="url" name="url" required value="${escapeHtml(values.url)}">
+          </label>
+          <label>
+            Title
+            <input type="text" name="title" maxlength="300" value="${escapeHtml(values.title)}">
           </label>
           <label>
             Thumbnail URL
@@ -187,7 +197,7 @@ export function renderRssFeed(bookmarks: Bookmark[], siteUrl: string): string {
     .map(
       (bookmark) => `
         <item>
-          <title>${escapeXml(bookmark.url)}</title>
+          <title>${escapeXml(bookmark.title || bookmark.url)}</title>
           <link>${escapeXml(bookmark.url)}</link>
           <guid isPermaLink="false">bookmark-${bookmark.id}</guid>
           <pubDate>${escapeXml(new Date(bookmark.createdAt).toUTCString())}</pubDate>

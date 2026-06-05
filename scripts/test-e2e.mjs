@@ -52,6 +52,8 @@ async function waitForServerReady() {
 
 async function runE2eChecks() {
   const unique = Date.now().toString(36);
+  const bookmarkTitle = `e2e-title-${unique}`;
+  const updatedBookmarkTitle = `e2e-title-updated-${unique}`;
   const bookmarkUrl = `https://example.com/e2e-${unique}`;
   const updatedBookmarkUrl = `https://example.com/e2e-updated-${unique}`;
 
@@ -62,6 +64,7 @@ async function runE2eChecks() {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
+      title: bookmarkTitle,
       url: bookmarkUrl,
       thumbnailUrl: `https://example.com/thumb-${unique}.png`,
       comment: `e2e-${unique}`,
@@ -81,10 +84,12 @@ async function runE2eChecks() {
 
   const rssBody = await rssResponse.text();
   assert.ok(rssBody.includes(bookmarkUrl), 'RSS feed should include the posted bookmark URL');
+  assert.ok(rssBody.includes(`<title>${bookmarkTitle}</title>`), 'RSS feed should include the posted bookmark title');
 
   const indexAfterCreate = await fetch(`${BASE_URL}/`);
   assert.equal(indexAfterCreate.status, 200, 'GET / after create should return 200');
   const indexAfterCreateBody = await indexAfterCreate.text();
+  assert.ok(indexAfterCreateBody.includes(bookmarkTitle), 'Index should include created bookmark title');
   const idMatch = indexAfterCreateBody.match(/href="\/\?edit=(\d+)#editor"[^>]*>Edit\/Delete<\/a>/);
   assert.ok(idMatch, 'Created bookmark should have an Edit/Delete link with id');
   const bookmarkId = idMatch[1];
@@ -104,6 +109,7 @@ async function runE2eChecks() {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
+      title: updatedBookmarkTitle,
       url: updatedBookmarkUrl,
       thumbnailUrl: `https://example.com/thumb-updated-${unique}.png`,
       comment: `e2e-updated-${unique}`,
@@ -117,6 +123,7 @@ async function runE2eChecks() {
   assert.equal(rssAfterUpdate.status, 200, 'GET /rss.xml after update should return 200');
   const rssAfterUpdateBody = await rssAfterUpdate.text();
   assert.ok(rssAfterUpdateBody.includes(updatedBookmarkUrl), 'RSS feed should include the updated bookmark URL');
+  assert.ok(rssAfterUpdateBody.includes(`<title>${updatedBookmarkTitle}</title>`), 'RSS feed should include the updated bookmark title');
   assert.ok(!rssAfterUpdateBody.includes(bookmarkUrl), 'RSS feed should not include the old bookmark URL after update');
 
   const deleteResponse = await fetch(`${BASE_URL}/bookmarks/${bookmarkId}/delete`, {

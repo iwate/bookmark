@@ -60,8 +60,8 @@ npm run test:e2e
 
 - `GET /`: render bookmark list and forms
 - `GET /rss.xml`: render RSS feed from current bookmarks
-- `POST /bookmarks`: create a bookmark (`url`, `thumbnailUrl`, `comment`, `secret`)
-- `POST /bookmarks/:id/update`: update an existing bookmark (`url`, `thumbnailUrl`, `comment`, `secret`)
+- `POST /bookmarks`: create a bookmark (`url`, `title`, `thumbnailUrl`, `comment`, `secret`)
+- `POST /bookmarks/:id/update`: update an existing bookmark (`url`, `title`, `thumbnailUrl`, `comment`, `secret`)
 - `POST /bookmarks/:id/delete`: delete an existing bookmark (`secret`)
 
 All write routes require a valid `WRITE_SECRET` and return `403` when authentication fails.

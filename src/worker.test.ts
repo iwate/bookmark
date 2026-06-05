@@ -5,6 +5,7 @@ function createDbMock() {
   const bookmarks = [
     {
       id: 1,
+      title: 'hello title',
       url: 'https://example.com',
       thumbnailUrl: '',
       comment: 'hello',
@@ -32,6 +33,7 @@ function createDbMock() {
               results: bookmarks.map((bookmark) => ({
                 id: bookmark.id,
                 url: bookmark.url,
+                title: bookmark.title || null,
                 thumbnail_url: bookmark.thumbnailUrl || null,
                 comment: bookmark.comment || null,
                 created_at: bookmark.createdAt,
@@ -41,19 +43,20 @@ function createDbMock() {
           run: async () => {
             calls.run += 1;
             if (sql.includes('INSERT INTO bookmarks')) {
-              const [url, thumbnailUrl, comment, createdAt] = values as [string, string | null, string | null, string];
+              const [url, thumbnailUrl, comment, title, createdAt] = values as [string, string | null, string | null, string | null, string];
               bookmarks.unshift({
                 id: bookmarks.length + 1,
                 url,
                 thumbnailUrl: thumbnailUrl ?? '',
                 comment: comment ?? '',
+                title: title ?? '',
                 createdAt,
               });
               return { meta: { changes: 1 } };
             }
 
             if (sql.includes('UPDATE bookmarks')) {
-              const [url, thumbnailUrl, comment, id] = values as [string, string | null, string | null, number];
+              const [url, thumbnailUrl, comment, title, id] = values as [string, string | null, string | null, string | null, number];
               const target = bookmarks.find((bookmark) => bookmark.id === id);
               if (!target) {
                 return { meta: { changes: 0 } };
@@ -61,6 +64,7 @@ function createDbMock() {
               target.url = url;
               target.thumbnailUrl = thumbnailUrl ?? '';
               target.comment = comment ?? '';
+              target.title = title ?? '';
               return { meta: { changes: 1 } };
             }
 
@@ -89,6 +93,7 @@ function createDbMock() {
       results: bookmarks.map((bookmark) => ({
         id: bookmark.id,
         url: bookmark.url,
+        title: bookmark.title || null,
         thumbnail_url: bookmark.thumbnailUrl || null,
         comment: bookmark.comment || null,
         created_at: bookmark.createdAt,
@@ -105,6 +110,7 @@ function createDbMock() {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.ok(html.includes('https://example.com'));
+  assert.ok(html.includes('hello title'));
   assert.ok(html.includes('href="/?edit=1#editor"'));
   assert.ok(!html.includes('<details>'));
 }
@@ -132,7 +138,18 @@ function createDbMock() {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('content-type'), 'application/rss+xml; charset=utf-8');
   const rss = await response.text();
+  assert.ok(rss.includes('<title>hello title</title>'));
   assert.ok(rss.includes('https://example.com'));
+}
+
+{
+  const mock = createDbMock();
+  mock.bookmarks[0].title = '';
+  const response = await app.fetch(new Request('https://example.com/rss.xml'), { DB: mock.db } as never);
+
+  assert.equal(response.status, 200);
+  const rss = await response.text();
+  assert.ok(rss.includes('<title>https://example.com</title>'));
 }
 
 {
@@ -170,6 +187,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: 'updated title',
         url: 'https://example.com/updated',
         thumbnailUrl: 'https://example.com/updated.png',
         comment: 'updated',
@@ -181,6 +199,7 @@ function createDbMock() {
 
   assert.equal(response.status, 302);
   assert.equal(mock.bookmarks[0]?.url, 'https://example.com/updated');
+  assert.equal(mock.bookmarks[0]?.title, 'updated title');
 }
 
 {
@@ -190,6 +209,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
@@ -210,6 +230,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'invalid',
         thumbnailUrl: '',
         comment: '',
@@ -229,6 +250,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
@@ -256,6 +278,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
@@ -279,6 +302,7 @@ function createDbMock() {
         'sec-fetch-site': 'cross-site',
       },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
@@ -521,6 +545,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: 'created title',
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',
@@ -532,6 +557,7 @@ function createDbMock() {
 
   assert.equal(response.status, 302);
   assert.equal(mock.calls.run, 1);
+  assert.equal(mock.bookmarks[0]?.title, 'created title');
 }
 
 {
@@ -541,6 +567,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',
@@ -576,6 +603,7 @@ function createDbMock() {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        title: '',
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',

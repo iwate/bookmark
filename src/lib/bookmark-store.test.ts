@@ -44,6 +44,7 @@ function createDbMock() {
                   url: 'https://example.com',
                   thumbnail_url: null,
                   comment: 'hi',
+                  title: null,
                   created_at: '2026-06-05T00:00:00.000Z',
                 },
               ],
@@ -65,6 +66,7 @@ function createDbMock() {
       url: 'https://example.com',
       thumbnailUrl: '',
       comment: 'hi',
+      title: '',
       createdAt: '2026-06-05T00:00:00.000Z',
     },
   ]);
@@ -79,12 +81,13 @@ function createDbMock() {
       url: 'https://example.com',
       thumbnailUrl: '',
       comment: '',
+      title: '',
     },
     '2026-06-05T00:00:00.000Z',
   );
 
   assert.equal(mock.calls.prepare, 1);
-  assert.deepEqual(mock.calls.bind, [['https://example.com', null, null, '2026-06-05T00:00:00.000Z']]);
+  assert.deepEqual(mock.calls.bind, [['https://example.com', null, null, null, '2026-06-05T00:00:00.000Z']]);
   assert.equal(mock.calls.run, 1);
 }
 
@@ -95,10 +98,11 @@ function createDbMock() {
     url: 'https://updated.example.com',
     thumbnailUrl: 'https://updated.example.com/thumb.png',
     comment: 'updated comment',
+    title: 'updated title',
   });
 
   assert.equal(mock.calls.prepare, 1);
-  assert.deepEqual(mock.calls.bind, [['https://updated.example.com', 'https://updated.example.com/thumb.png', 'updated comment', 9]]);
+  assert.deepEqual(mock.calls.bind, [['https://updated.example.com', 'https://updated.example.com/thumb.png', 'updated comment', 'updated title', 9]]);
   assert.equal(mock.calls.run, 1);
   assert.equal(updated, true);
 }
@@ -125,6 +129,7 @@ function createDbMock() {
     url: 'https://updated.example.com',
     thumbnailUrl: '',
     comment: '',
+    title: '',
   });
 
   assert.equal(updated, false);

@@ -96,6 +96,7 @@ async function readPayload(request: Request): Promise<FormPayload> {
       url: String(json.url ?? ''),
       thumbnailUrl: String(json.thumbnailUrl ?? ''),
       comment: String(json.comment ?? ''),
+      title: String(json.title ?? ''),
       secret: String(json.secret ?? ''),
     };
   }
@@ -115,6 +116,7 @@ async function readPayload(request: Request): Promise<FormPayload> {
     url: String(data.get('url') ?? ''),
     thumbnailUrl: String(data.get('thumbnailUrl') ?? ''),
     comment: String(data.get('comment') ?? ''),
+    title: String(data.get('title') ?? ''),
     secret: String(data.get('secret') ?? ''),
   };
 }
@@ -126,6 +128,7 @@ function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values
       url: values?.url ?? '',
       thumbnailUrl: values?.thumbnailUrl ?? '',
       comment: values?.comment ?? '',
+      title: values?.title ?? '',
       secret: '',
     },
     errors,
@@ -143,6 +146,7 @@ function renderPageWithEditor(
     url: payload?.url ?? entry?.url ?? '',
     thumbnailUrl: payload?.thumbnailUrl ?? entry?.thumbnailUrl ?? '',
     comment: payload?.comment ?? entry?.comment ?? '',
+    title: payload?.title ?? entry?.title ?? '',
     secret: '',
   };
 
@@ -152,6 +156,7 @@ function renderPageWithEditor(
       url: '',
       thumbnailUrl: '',
       comment: '',
+      title: '',
       secret: '',
     },
     errors: [],
@@ -191,6 +196,7 @@ app.get('/', async (c) => {
             url: entry.url,
             thumbnailUrl: entry.thumbnailUrl,
             comment: entry.comment,
+            title: entry.title,
             secret: '',
           },
           errors: [],
