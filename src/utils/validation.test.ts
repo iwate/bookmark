@@ -10,6 +10,7 @@ import { validateBookmarkInput } from './validation.ts';
       url: 'https://example.com',
       thumbnailUrl: '',
       comment: '',
+      title: '',
     });
   }
 }
@@ -59,5 +60,29 @@ import { validateBookmarkInput } from './validation.ts';
   assert.equal(result.ok, false);
   if (!result.ok) {
     assert.deepEqual(result.errors, [{ field: 'thumbnailUrl', message: 'must be 2048 characters or fewer' }]);
+  }
+}
+
+{
+  const result = validateBookmarkInput({
+    url: 'https://example.com',
+    title: '  hello title  ',
+  });
+
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.value.title, 'hello title');
+  }
+}
+
+{
+  const result = validateBookmarkInput({
+    url: 'https://example.com',
+    title: 'a'.repeat(301),
+  });
+
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.deepEqual(result.errors, [{ field: 'title', message: 'must be 300 characters or fewer' }]);
   }
 }

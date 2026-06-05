@@ -2,6 +2,7 @@ export type BookmarkInput = {
   url: string;
   thumbnailUrl?: string;
   comment?: string;
+  title?: string;
 };
 
 export type ValidationError = {
@@ -14,6 +15,7 @@ export type ValidationResult =
   | { ok: false; errors: ValidationError[] };
 
 const MAX_COMMENT_LENGTH = 500;
+const MAX_TITLE_LENGTH = 300;
 const MAX_URL_LENGTH = 2048;
 
 function normalizeText(value: unknown): string {
@@ -44,6 +46,7 @@ export function validateBookmarkInput(input: BookmarkInput): ValidationResult {
   const url = normalizeText(input.url);
   const thumbnailUrl = normalizeText(input.thumbnailUrl);
   const comment = normalizeText(input.comment);
+  const title = normalizeText(input.title);
 
   if (!url) {
     errors.push({ field: 'url', message: 'is required' });
@@ -61,6 +64,10 @@ export function validateBookmarkInput(input: BookmarkInput): ValidationResult {
     errors.push({ field: 'comment', message: `must be ${MAX_COMMENT_LENGTH} characters or fewer` });
   }
 
+  if (title.length > MAX_TITLE_LENGTH) {
+    errors.push({ field: 'title', message: `must be ${MAX_TITLE_LENGTH} characters or fewer` });
+  }
+
   if (errors.length > 0) {
     return { ok: false, errors };
   }
@@ -71,6 +78,7 @@ export function validateBookmarkInput(input: BookmarkInput): ValidationResult {
       url,
       thumbnailUrl,
       comment,
+      title,
     },
   };
 }

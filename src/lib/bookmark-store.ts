@@ -11,19 +11,19 @@ export type D1DatabaseLike = {
 };
 
 const BOOKMARK_SELECT_SQL = `
-  SELECT id, url, thumbnail_url, comment, created_at
+  SELECT id, url, title, thumbnail_url, comment, created_at
   FROM bookmarks
   ORDER BY created_at DESC, id DESC
 `;
 
 const BOOKMARK_INSERT_SQL = `
-  INSERT INTO bookmarks (url, thumbnail_url, comment, created_at)
-  VALUES (?, ?, ?, ?)
+  INSERT INTO bookmarks (url, thumbnail_url, comment, title, created_at)
+  VALUES (?, ?, ?, ?, ?)
 `;
 
 const BOOKMARK_UPDATE_SQL = `
   UPDATE bookmarks
-  SET url = ?, thumbnail_url = ?, comment = ?
+  SET url = ?, thumbnail_url = ?, comment = ?, title = ?
   WHERE id = ?
 `;
 
@@ -53,23 +53,23 @@ export async function listBookmarks(db: D1DatabaseLike): Promise<Bookmark[]> {
 
 export async function createBookmark(
   db: D1DatabaseLike,
-  bookmark: Pick<Bookmark, 'url' | 'thumbnailUrl' | 'comment'>,
+  bookmark: Pick<Bookmark, 'url' | 'thumbnailUrl' | 'comment' | 'title'>,
   createdAt = new Date().toISOString(),
 ): Promise<void> {
   await db
     .prepare(BOOKMARK_INSERT_SQL)
-    .bind(bookmark.url, bookmark.thumbnailUrl || null, bookmark.comment || null, createdAt)
+    .bind(bookmark.url, bookmark.thumbnailUrl || null, bookmark.comment || null, bookmark.title || null, createdAt)
     .run();
 }
 
 export async function updateBookmarkById(
   db: D1DatabaseLike,
   id: number,
-  bookmark: Pick<Bookmark, 'url' | 'thumbnailUrl' | 'comment'>,
+  bookmark: Pick<Bookmark, 'url' | 'thumbnailUrl' | 'comment' | 'title'>,
 ): Promise<boolean> {
   const result = await db
     .prepare(BOOKMARK_UPDATE_SQL)
-    .bind(bookmark.url, bookmark.thumbnailUrl || null, bookmark.comment || null, id)
+    .bind(bookmark.url, bookmark.thumbnailUrl || null, bookmark.comment || null, bookmark.title || null, id)
     .run();
 
   const changes = getChanges(result);
