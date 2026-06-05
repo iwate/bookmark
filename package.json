@@ -7,6 +7,19 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest run",
+    "test:watch": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest",
+    "test:coverage": "NODE_OPTIONS=\"$NODE_OPTIONS --allow-fs-read=/ --allow-fs-write=/ --allow-inspector\" vitest run --coverage",
+    "dev": "wrangler dev src/worker.ts"
+  },
+  "dependencies": {
+    "hono": "^4.8.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250605.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.19.1"
   }
 }
