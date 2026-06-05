@@ -1,5 +1,6 @@
 ---
 description: Review implementation details and provide constructive feedback.
+user-invocable: false
 tools:
   [
     "execute",

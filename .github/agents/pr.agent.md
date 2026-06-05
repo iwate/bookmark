@@ -1,5 +1,6 @@
 ---
 description: Create a pull request for the specified issue and implementation.
+user-invocable: false
 tools:
   [
     "execute",

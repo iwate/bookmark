@@ -1,5 +1,6 @@
 ---
 description: Refine requirements and specifications to support issue reporting and feature requests.
+user-invocable: false
 tools:
   [
     "edit",

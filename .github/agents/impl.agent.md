@@ -1,5 +1,6 @@
 ---
 description: Execute implementation based on the specified plan following TDD principles.
+user-invocable: false
 tools:
   [
     "execute",
