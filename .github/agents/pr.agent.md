@@ -19,14 +19,14 @@ Create a pull request for the given issue and implementation.
 1. Verify that PR is ready to be created
    - Check that documentation has been updated
    - Ensure there are no uncommitted changes
-   - Verify that tests (CI) pass
-  - Verify local runtime startup succeeded with `npm run dev`
-  - Verify minimal manual smoke checks succeeded: `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), `GET /rss.xml`
+  - Verify automated tests (CI) pass for both `npm run test` and `npm run test:e2e`
+  - For infra/config/runtime-touching changes: verify local runtime startup succeeded with `npm run dev`
+  - For infra/config/runtime-touching changes: verify minimal manual smoke checks succeeded: `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), `GET /rss.xml`
   - Verify automated test results and runtime/manual smoke results are reported distinctly
 2. If the situation is deemed unsuitable for creation, provide recommendations and exit. Otherwise, create the PR.
 3. Notify the user of the PR contents and link.
 
-If runtime startup or manual smoke checks fail, do not create the PR. Return actionable blocker details (failed check, observed error/behavior, and immediate remediation path).
+If required runtime startup or manual smoke checks fail, do not create the PR. Return actionable blocker details (failed check, observed error/behavior, and immediate remediation path).
 
 ## Notes
 

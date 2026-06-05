@@ -9,8 +9,11 @@ Code under review has already passed development standards (see Development Poli
 
 ### When to Request Review
 - After all tests pass locally and in CI/CD
-- After local runtime startup is verified with `npm run dev`
-- After a minimal manual smoke check passes for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
+- After both automated commands pass:
+	- `npm run test`
+	- `npm run test:e2e`
+- For infra/config/runtime-touching changes only: after local runtime startup is verified with `npm run dev`
+- For infra/config/runtime-touching changes only: after minimal manual smoke checks pass for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
 - After code follows Development Policy standards (ESLint, Prettier, TypeScript)
 - After test coverage thresholds are met (80% minimum)
 - After addressing any pre-commit checks
@@ -47,10 +50,12 @@ Code under review has already passed development standards (see Development Poli
 - [ ] Security-sensitive code has security tests
 
 ### Runtime & Smoke Validation Verification
-- [ ] Local runtime startup was verified with `npm run dev`
-- [ ] Manual smoke validation was performed for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
+- [ ] `npm run test` passed
+- [ ] `npm run test:e2e` passed
+- [ ] For infra/config/runtime-touching changes: local runtime startup was verified with `npm run dev`
+- [ ] For infra/config/runtime-touching changes: manual smoke validation was performed for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
 - [ ] Runtime/manual smoke validation results are reported separately from automated test results
-- [ ] If runtime/manual smoke checks failed, PR is marked not-ready until blocker details and fixes are provided
+- [ ] If required runtime/manual smoke checks failed, PR is marked not-ready until blocker details and fixes are provided
 
 ### Code Quality Review
 - [ ] Logic is clear and easy to understand
@@ -152,7 +157,8 @@ A PR is ready to merge when:
 - [ ] At least 1 reviewer has approved
 - [ ] All review feedback is addressed
 - [ ] All CI/CD checks pass
-- [ ] Local runtime startup and manual MVP smoke checks are confirmed
+- [ ] `npm run test` and `npm run test:e2e` are confirmed
+- [ ] For infra/config/runtime-touching changes: local runtime startup and manual MVP smoke checks are confirmed
 - [ ] Code coverage thresholds maintained or improved
 - [ ] No merge conflicts
 - [ ] Branch is up to date with target branch

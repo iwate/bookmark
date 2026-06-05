@@ -51,4 +51,7 @@ Apply migrations as needed for the configured D1 database.
 
 ```sh
 npm test
+npm run test:e2e
 ```
+
+`npm test` remains the default automated suite. `npm run test:e2e` verifies MVP critical paths (`GET /`, `POST /bookmarks` with valid `WRITE_SECRET`, `GET /rss.xml`) against a local Wrangler runtime.
