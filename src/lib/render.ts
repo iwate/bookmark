@@ -101,7 +101,7 @@ export function renderIndexPage(input: RenderPageInput): string {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bookmarks</title>
+    <title>きになるなるなる</title>
     <style>
       :root { color-scheme: light; }
       body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #f5f1e8; color: #1f2937; }
@@ -137,11 +137,10 @@ export function renderIndexPage(input: RenderPageInput): string {
   <body>
     <main>
       <header>
-        <h1>Bookmarks</h1>
-        <p class="subtle">Newest saved links first.</p>
+        <h1>きになるなるなる</h1>
+        <p class="subtle">@iwate's bookmarks</p>
       </header>
-      <section id="editor" aria-labelledby="save-heading">
-        <h2 id="save-heading">${sectionHeading}</h2>
+      <section id="editor">
         ${isEditing ? `<p class="subtle">Editing #${input.editor?.id}</p>` : ''}
         ${renderErrors(formErrors)}
         <form method="post" action="${formAction}">
@@ -184,8 +183,7 @@ export function renderIndexPage(input: RenderPageInput): string {
           </div>
         </form>
       </section>
-      <section aria-labelledby="saved-heading">
-        <h2 id="saved-heading">Saved links</h2>
+      <section id="collection">
         <ol class="bookmarks">
           ${input.bookmarks.map((bookmark) => renderBookmark(bookmark)).join('') || '<li>No bookmarks yet.</li>'}
         </ol>
