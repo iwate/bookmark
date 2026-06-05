@@ -117,7 +117,11 @@ function createDbMock() {
   const html = await response.text();
   assert.ok(html.includes('Editing #1'));
   assert.ok(html.includes('action="/bookmarks/1/update"'));
-  assert.ok(html.includes('action="/bookmarks/1/delete"'));
+  assert.ok(html.includes('formaction="/bookmarks/1/delete"'));
+  assert.ok(html.includes('formmethod="post"'));
+  assert.ok(html.includes('formnovalidate'));
+  assert.equal((html.match(/<form\b/g) ?? []).length, 1);
+  assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
   assert.ok(html.includes('Cancel edit'));
 }
 

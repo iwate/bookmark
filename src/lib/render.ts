@@ -111,15 +111,14 @@ export function renderIndexPage(input: RenderPageInput): string {
       input, textarea { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.7rem 0.8rem; }
       textarea { min-height: 6rem; resize: vertical; }
       button { border: 0; border-radius: 999px; padding: 0.8rem 1rem; background: #111827; color: #fff; font-weight: 700; width: fit-content; }
+      .button-secondary { background: #4b5563; }
+      .form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
       .errors { margin: 0; padding-left: 1.2rem; color: #b91c1c; }
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
       .bookmark-action-wrap { margin: 0; text-align: right; }
       .bookmark-action { color: #1f2937; font-weight: 700; }
-      .editor-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
-      .editor-controls form { margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; display: inline-flex; gap: 0.5rem; align-items: center; }
-      .editor-controls label { font-weight: 600; }
       .cancel-edit { color: #1f2937; font-weight: 700; }
       img { max-width: 100%; height: auto; border-radius: 0.5rem; }
       .comment { margin: 0; white-space: pre-wrap; }
@@ -154,22 +153,23 @@ export function renderIndexPage(input: RenderPageInput): string {
             Secret
             <input type="password" name="secret" required value="${escapeHtml(values.secret)}">
           </label>
-          <button type="submit">${submitLabel}</button>
+          <div class="form-actions">
+            <button type="submit">${submitLabel}</button>
+            ${
+              isEditing
+                ? `<button
+                    type="submit"
+                    class="button-secondary"
+                    formaction="/bookmarks/${input.editor?.id}/delete"
+                    formmethod="post"
+                    formnovalidate
+                    onclick="return confirm('Delete this bookmark?');"
+                  >Delete</button>
+                  <a class="cancel-edit" href="/#editor">Cancel edit</a>`
+                : ''
+            }
+          </div>
         </form>
-        ${
-          isEditing
-            ? `<div class="editor-controls">
-                <form method="post" action="/bookmarks/${input.editor?.id}/delete">
-                  <label>
-                    Secret
-                    <input type="password" name="secret" required value="">
-                  </label>
-                  <button type="submit" onclick="return confirm('Delete this bookmark?');">Delete</button>
-                </form>
-                <a class="cancel-edit" href="/#editor">Cancel edit</a>
-              </div>`
-            : ''
-        }
       </section>
       <section aria-labelledby="saved-heading">
         <h2 id="saved-heading">Saved links</h2>

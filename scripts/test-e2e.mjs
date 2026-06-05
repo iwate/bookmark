@@ -93,7 +93,11 @@ async function runE2eChecks() {
   assert.equal(editPageResponse.status, 200, 'GET /?edit=id#editor should return 200');
   const editPageBody = await editPageResponse.text();
   assert.ok(editPageBody.includes(`action="/bookmarks/${bookmarkId}/update"`), 'Edit page should set update action on top form');
-  assert.ok(editPageBody.includes(`action="/bookmarks/${bookmarkId}/delete"`), 'Edit page should expose delete action in editor');
+  assert.ok(editPageBody.includes(`formaction="/bookmarks/${bookmarkId}/delete"`), 'Edit page should expose delete button action in the top form');
+  assert.ok(editPageBody.includes('formmethod="post"'), 'Delete button should submit via POST method');
+  assert.ok(editPageBody.includes('formnovalidate'), 'Delete button should bypass url field validation');
+  assert.equal((editPageBody.match(/<form\b/g) ?? []).length, 1, 'Edit page should have a single editor form');
+  assert.equal((editPageBody.match(/name="secret"/g) ?? []).length, 1, 'Edit page should have one secret input');
   assert.ok(editPageBody.includes('Cancel edit'), 'Edit page should include cancel control');
 
   const updateResponse = await fetch(`${BASE_URL}/bookmarks/${bookmarkId}/update`, {

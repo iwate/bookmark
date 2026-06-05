@@ -80,10 +80,15 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
   assert.ok(html.includes('https://example.com/edited'));
   assert.ok(html.includes('Editing #9'));
   assert.ok(html.includes('action="/bookmarks/9/update"'));
-  assert.ok(html.includes('action="/bookmarks/9/delete"'));
+  assert.ok(html.includes('formaction="/bookmarks/9/delete"'));
+  assert.ok(html.includes('formmethod="post"'));
+  assert.ok(html.includes('formnovalidate'));
   assert.ok(html.includes('Update'));
+  assert.ok(html.includes('Delete'));
   assert.ok(html.includes('Cancel edit'));
   assert.ok(html.includes('must be a valid URL'));
   assert.ok(html.includes('is invalid'));
+  assert.equal((html.match(/<form\b/g) ?? []).length, 1);
+  assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
   assert.ok(!html.includes('should-not-appear'));
 }
