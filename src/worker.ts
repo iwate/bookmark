@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import type { BookmarkInput } from './utils/validation.ts';
+import type { BookmarkInput, ValidationError } from './utils/validation.ts';
 import { validateBookmarkInput } from './utils/validation.ts';
-import { createBookmark, listBookmarks, type D1DatabaseLike } from './lib/bookmark-store.ts';
+import { createBookmark, deleteBookmarkById, listBookmarks, updateBookmarkById, type D1DatabaseLike } from './lib/bookmark-store.ts';
 import { renderIndexPage, renderRssFeed } from './lib/render.ts';
 
 type Env = {
@@ -44,6 +44,37 @@ function ensureWriteRuntimeConfig(c: { env: Partial<Env> }) {
     return new Response('server misconfigured', { status: 500 });
   }
   return null;
+}
+
+function isDisallowedWriteRequest(request: Request, requestUrl: string): boolean {
+  const secFetchSite = (request.headers.get('sec-fetch-site') ?? '').toLowerCase();
+  if (secFetchSite === 'cross-site') {
+    return true;
+  }
+
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    const requestOrigin = new URL(requestUrl).origin;
+    const originHeader = new URL(origin).origin;
+    return originHeader !== requestOrigin;
+  } catch {
+    return true;
+  }
+}
+
+function parseBookmarkId(rawId: string): number | null {
+  if (!/^\d+$/.test(rawId)) {
+    return null;
+  }
+  const id = Number(rawId);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return null;
+  }
+  return id;
 }
 
 async function readPayload(request: Request): Promise<FormPayload> {
@@ -101,6 +132,37 @@ function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values
   });
 }
 
+function renderPageWithEntryErrors(
+  bookmarks: Awaited<ReturnType<typeof listBookmarks>>,
+  entryId: number,
+  payload: FormPayload | undefined,
+  errors: ValidationError[],
+) {
+  return renderIndexPage({
+    bookmarks,
+    values: {
+      url: '',
+      thumbnailUrl: '',
+      comment: '',
+      secret: '',
+    },
+    errors: [],
+    entryForms: {
+      [entryId]: {
+        values: payload
+          ? {
+              url: payload.url,
+              thumbnailUrl: payload.thumbnailUrl ?? '',
+              comment: payload.comment ?? '',
+              secret: '',
+            }
+          : undefined,
+        errors,
+      },
+    },
+  });
+}
+
 app.get('/', async (c) => {
   const configError = ensureReadRuntimeConfig(c);
   if (configError) {
@@ -138,6 +200,10 @@ app.post('/bookmarks', async (c) => {
     return configError;
   }
 
+  if (isDisallowedWriteRequest(c.req.raw, c.req.url)) {
+    return c.text('forbidden', 403);
+  }
+
   let payload: FormPayload;
   try {
     payload = await readPayload(c.req.raw);
@@ -169,6 +235,106 @@ app.post('/bookmarks', async (c) => {
 
   try {
     await createBookmark(c.env.DB, result.value);
+    return c.redirect('/');
+  } catch {
+    return c.text('internal server error', 500);
+  }
+});
+
+app.post('/bookmarks/:id/update', async (c) => {
+  const configError = ensureWriteRuntimeConfig(c);
+  if (configError) {
+    return configError;
+  }
+
+  if (isDisallowedWriteRequest(c.req.raw, c.req.url)) {
+    return c.text('forbidden', 403);
+  }
+
+  const bookmarkId = parseBookmarkId(c.req.param('id'));
+  if (bookmarkId === null) {
+    return c.text('not found', 404);
+  }
+
+  let payload: FormPayload;
+  try {
+    payload = await readPayload(c.req.raw);
+  } catch (error) {
+    if (error instanceof BadRequestError) {
+      return c.text(error.message, 400);
+    }
+    return c.text('invalid request body', 400);
+  }
+
+  if (!c.env.WRITE_SECRET || payload.secret !== c.env.WRITE_SECRET) {
+    try {
+      const bookmarks = await listBookmarks(c.env.DB);
+      return c.html(renderPageWithEntryErrors(bookmarks, bookmarkId, payload, [{ field: 'secret', message: 'is invalid' }]), 403);
+    } catch {
+      return c.text('internal server error', 500);
+    }
+  }
+
+  const result = validateBookmarkInput(payload);
+  if (!result.ok) {
+    try {
+      const bookmarks = await listBookmarks(c.env.DB);
+      return c.html(renderPageWithEntryErrors(bookmarks, bookmarkId, payload, result.errors), 400);
+    } catch {
+      return c.text('internal server error', 500);
+    }
+  }
+
+  try {
+    const updated = await updateBookmarkById(c.env.DB, bookmarkId, result.value);
+    if (!updated) {
+      return c.text('not found', 404);
+    }
+    return c.redirect('/');
+  } catch {
+    return c.text('internal server error', 500);
+  }
+});
+
+app.post('/bookmarks/:id/delete', async (c) => {
+  const configError = ensureWriteRuntimeConfig(c);
+  if (configError) {
+    return configError;
+  }
+
+  if (isDisallowedWriteRequest(c.req.raw, c.req.url)) {
+    return c.text('forbidden', 403);
+  }
+
+  const bookmarkId = parseBookmarkId(c.req.param('id'));
+  if (bookmarkId === null) {
+    return c.text('not found', 404);
+  }
+
+  let payload: FormPayload;
+  try {
+    payload = await readPayload(c.req.raw);
+  } catch (error) {
+    if (error instanceof BadRequestError) {
+      return c.text(error.message, 400);
+    }
+    return c.text('invalid request body', 400);
+  }
+
+  if (!c.env.WRITE_SECRET || payload.secret !== c.env.WRITE_SECRET) {
+    try {
+      const bookmarks = await listBookmarks(c.env.DB);
+      return c.html(renderPageWithEntryErrors(bookmarks, bookmarkId, undefined, [{ field: 'secret', message: 'is invalid' }]), 403);
+    } catch {
+      return c.text('internal server error', 500);
+    }
+  }
+
+  try {
+    const deleted = await deleteBookmarkById(c.env.DB, bookmarkId);
+    if (!deleted) {
+      return c.text('not found', 404);
+    }
     return c.redirect('/');
   } catch {
     return c.text('internal server error', 500);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createBookmark, listBookmarks } from './bookmark-store.ts';
+import { createBookmark, deleteBookmarkById, listBookmarks, updateBookmarkById } from './bookmark-store.ts';
 
 function createDbMock() {
   const calls = {
@@ -86,4 +86,80 @@ function createDbMock() {
   assert.equal(mock.calls.prepare, 1);
   assert.deepEqual(mock.calls.bind, [['https://example.com', null, null, '2026-06-05T00:00:00.000Z']]);
   assert.equal(mock.calls.run, 1);
+}
+
+{
+  const mock = createDbMock();
+
+  const updated = await updateBookmarkById(mock.db, 9, {
+    url: 'https://updated.example.com',
+    thumbnailUrl: 'https://updated.example.com/thumb.png',
+    comment: 'updated comment',
+  });
+
+  assert.equal(mock.calls.prepare, 1);
+  assert.deepEqual(mock.calls.bind, [['https://updated.example.com', 'https://updated.example.com/thumb.png', 'updated comment', 9]]);
+  assert.equal(mock.calls.run, 1);
+  assert.equal(updated, true);
+}
+
+{
+  const mock = createDbMock();
+  mock.db.prepare = () => {
+    mock.calls.prepare += 1;
+    return {
+      bind: (...values: unknown[]) => {
+        mock.calls.bind.push(values);
+        return {
+          all: mock.all,
+          run: async () => {
+            mock.calls.run += 1;
+            return { meta: { changes: 0 } };
+          },
+        };
+      },
+    };
+  };
+
+  const updated = await updateBookmarkById(mock.db, 404, {
+    url: 'https://updated.example.com',
+    thumbnailUrl: '',
+    comment: '',
+  });
+
+  assert.equal(updated, false);
+}
+
+{
+  const mock = createDbMock();
+
+  const deleted = await deleteBookmarkById(mock.db, 11);
+
+  assert.equal(mock.calls.prepare, 1);
+  assert.deepEqual(mock.calls.bind, [[11]]);
+  assert.equal(mock.calls.run, 1);
+  assert.equal(deleted, true);
+}
+
+{
+  const mock = createDbMock();
+  mock.db.prepare = () => {
+    mock.calls.prepare += 1;
+    return {
+      bind: (...values: unknown[]) => {
+        mock.calls.bind.push(values);
+        return {
+          all: mock.all,
+          run: async () => {
+            mock.calls.run += 1;
+            return { meta: { changes: 0 } };
+          },
+        };
+      },
+    };
+  };
+
+  const deleted = await deleteBookmarkById(mock.db, 404);
+
+  assert.equal(deleted, false);
 }

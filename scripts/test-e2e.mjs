@@ -53,6 +53,7 @@ async function waitForServerReady() {
 async function runE2eChecks() {
   const unique = Date.now().toString(36);
   const bookmarkUrl = `https://example.com/e2e-${unique}`;
+  const updatedBookmarkUrl = `https://example.com/e2e-updated-${unique}`;
 
   const indexResponse = await fetch(`${BASE_URL}/`);
   assert.equal(indexResponse.status, 200, 'GET / should return 200');
@@ -80,6 +81,46 @@ async function runE2eChecks() {
 
   const rssBody = await rssResponse.text();
   assert.ok(rssBody.includes(bookmarkUrl), 'RSS feed should include the posted bookmark URL');
+
+  const indexAfterCreate = await fetch(`${BASE_URL}/`);
+  assert.equal(indexAfterCreate.status, 200, 'GET / after create should return 200');
+  const indexAfterCreateBody = await indexAfterCreate.text();
+  const escapedBookmarkUrl = bookmarkUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const idMatch = indexAfterCreateBody.match(new RegExp(`${escapedBookmarkUrl}[\\s\\S]*?action="/bookmarks/(\\d+)/update"`));
+  assert.ok(idMatch, 'Created bookmark should have an update form action with id');
+  const bookmarkId = idMatch[1];
+
+  const updateResponse = await fetch(`${BASE_URL}/bookmarks/${bookmarkId}/update`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      url: updatedBookmarkUrl,
+      thumbnailUrl: `https://example.com/thumb-updated-${unique}.png`,
+      comment: `e2e-updated-${unique}`,
+      secret: WRITE_SECRET,
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(updateResponse.status, 302, 'POST /bookmarks/:id/update with valid WRITE_SECRET should redirect');
+
+  const rssAfterUpdate = await fetch(`${BASE_URL}/rss.xml`);
+  assert.equal(rssAfterUpdate.status, 200, 'GET /rss.xml after update should return 200');
+  const rssAfterUpdateBody = await rssAfterUpdate.text();
+  assert.ok(rssAfterUpdateBody.includes(updatedBookmarkUrl), 'RSS feed should include the updated bookmark URL');
+  assert.ok(!rssAfterUpdateBody.includes(bookmarkUrl), 'RSS feed should not include the old bookmark URL after update');
+
+  const deleteResponse = await fetch(`${BASE_URL}/bookmarks/${bookmarkId}/delete`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ secret: WRITE_SECRET }),
+    redirect: 'manual',
+  });
+  assert.equal(deleteResponse.status, 302, 'POST /bookmarks/:id/delete with valid WRITE_SECRET should redirect');
+
+  const rssAfterDelete = await fetch(`${BASE_URL}/rss.xml`);
+  assert.equal(rssAfterDelete.status, 200, 'GET /rss.xml after delete should return 200');
+  const rssAfterDeleteBody = await rssAfterDelete.text();
+  assert.ok(!rssAfterDeleteBody.includes(updatedBookmarkUrl), 'RSS feed should not include the deleted bookmark URL');
 }
 
 async function terminateProcess(child) {

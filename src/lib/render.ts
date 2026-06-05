@@ -10,6 +10,18 @@ type RenderPageInput = {
     comment: string;
     secret: string;
   };
+  entryForms?: Record<
+    number,
+    {
+      values?: {
+        url: string;
+        thumbnailUrl: string;
+        comment: string;
+        secret: string;
+      };
+      errors?: ValidationError[];
+    }
+  >;
 };
 
 function escapeHtml(value: string): string {
@@ -44,7 +56,15 @@ function renderErrors(errors: ValidationError[]): string {
   `;
 }
 
-function renderBookmark(bookmark: Bookmark): string {
+function renderBookmark(bookmark: Bookmark, entryForm?: RenderPageInput['entryForms'][number]): string {
+  const values = {
+    url: entryForm?.values?.url ?? bookmark.url,
+    thumbnailUrl: entryForm?.values?.thumbnailUrl ?? bookmark.thumbnailUrl,
+    comment: entryForm?.values?.comment ?? bookmark.comment,
+    secret: '',
+  };
+  const errors = entryForm?.errors ?? [];
+
   const thumbnail = bookmark.thumbnailUrl
     ? `<img src="${escapeHtml(bookmark.thumbnailUrl)}" alt="" loading="lazy" decoding="async">`
     : '';
@@ -59,6 +79,36 @@ function renderBookmark(bookmark: Bookmark): string {
       ${thumbnail}
       ${comment}
       <time datetime="${escapeHtml(bookmark.createdAt)}">${escapeHtml(formatDate(bookmark.createdAt))}</time>
+      <details>
+        <summary>Edit</summary>
+        ${renderErrors(errors)}
+        <form method="post" action="/bookmarks/${bookmark.id}/update">
+          <label>
+            URL
+            <input type="url" name="url" required value="${escapeHtml(values.url)}">
+          </label>
+          <label>
+            Thumbnail URL
+            <input type="url" name="thumbnailUrl" value="${escapeHtml(values.thumbnailUrl)}">
+          </label>
+          <label>
+            Comment
+            <textarea name="comment">${escapeHtml(values.comment)}</textarea>
+          </label>
+          <label>
+            Secret
+            <input type="password" name="secret" required value="${escapeHtml(values.secret)}">
+          </label>
+          <button type="submit">Update</button>
+        </form>
+      </details>
+      <form method="post" action="/bookmarks/${bookmark.id}/delete">
+        <label>
+          Secret
+          <input type="password" name="secret" required value="">
+        </label>
+        <button type="submit" onclick="return confirm('Delete this bookmark?');">Delete</button>
+      </form>
     </li>
   `;
 }
@@ -89,6 +139,8 @@ export function renderIndexPage(input: RenderPageInput): string {
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
+      .bookmark details > form,
+      .bookmark > form { margin-bottom: 0; box-shadow: none; }
       img { max-width: 100%; height: auto; border-radius: 0.5rem; }
       .comment { margin: 0; white-space: pre-wrap; }
       time { color: #6b7280; font-size: 0.92rem; }
@@ -127,7 +179,7 @@ export function renderIndexPage(input: RenderPageInput): string {
       <section aria-labelledby="saved-heading">
         <h2 id="saved-heading">Saved links</h2>
         <ol class="bookmarks">
-          ${input.bookmarks.map(renderBookmark).join('') || '<li>No bookmarks yet.</li>'}
+          ${input.bookmarks.map((bookmark) => renderBookmark(bookmark, input.entryForms?.[bookmark.id])).join('') || '<li>No bookmarks yet.</li>'}
         </ol>
       </section>
     </main>
