@@ -21,8 +21,16 @@ Build a bookmark web service for @iwate.
 * `docs/development-policy.md`: Coding standards, branching strategy, commit message conventions
 * `docs/testing-policy.md`: Testing strategy, coverage targets
 * `docs/review-policy.md`: Code review criteria, checklists
+* Review/PR readiness requires both automated commands: `npm run test` and `npm run test:e2e`
+* Manual runtime validation (`npm run dev` startup, `GET /`, `POST /bookmarks` with valid `WRITE_SECRET`, `GET /rss.xml`) is required only for infra/config/runtime-touching changes
+* If required runtime/manual validation fails, stop PR creation and report actionable blocker details
 
 ## Boundaries
 
 * Do not modify or commit `.env*` files
 * Only allow `wrangler setup/dev/d1/websearch` subcommands; no other subcommands permitted
+
+## Tools
+
+- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and DO NOT REQUEST BROADER PERMISSIONS or extra auth scopes.

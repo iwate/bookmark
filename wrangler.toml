@@ -1,0 +1,11 @@
+name = "bookmark"
+main = "src/worker.ts"
+compatibility_date = "2026-06-02"
+
+[secrets]
+required = ["WRITE_SECRET"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bookmark"
+database_id = "00000000-0000-0000-0000-000000000000"

@@ -1,7 +1,7 @@
 ---
 description: Orchestrates the implementation of feature additions and bug fixes based on user requests.
 argument-hint: Describe the issue you want to report or the feature you want to request.
-user-invocable: false
+disable-model-invocation: true
 tools:
   [
     "agent",

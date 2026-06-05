@@ -32,8 +32,18 @@ src/
 
 ### Test Execution
 - Run tests: `npm test`
+- Run end-to-end tests: `npm run test:e2e`
 - Run tests with coverage: `npm test -- --coverage`
 - Watch mode: `npm test -- --watch`
+
+### Runtime Startup & Manual Smoke Validation
+- Automated PR/readiness gates require both `npm run test` and `npm run test:e2e`.
+- Manual runtime startup and smoke validation are conditional and required only for infra/config/runtime-touching changes.
+- For those changes, confirm local runtime startup with `npm run dev` and perform a minimal smoke check of key MVP paths:
+  - `GET /`
+  - `POST /bookmarks` with a valid `WRITE_SECRET`
+  - `GET /rss.xml`
+- If required runtime startup or smoke checks fail, stop PR readiness work and report actionable blocker details (failed command/path, observed error, and next fix).
 
 ## Test Coverage Requirements
 
@@ -338,6 +348,7 @@ jobs:
 - Coverage report generated and reviewed
 - All critical paths have 100% coverage
 - Security tests included and passing
+- `npm run test` and `npm run test:e2e` both pass
 
 ## Maintenance & Documentation
 

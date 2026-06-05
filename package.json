@@ -7,6 +7,20 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:e2e": "node scripts/test-e2e.mjs",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "dev": "wrangler d1 migrations apply bookmark --local && wrangler dev src/worker.ts"
+  },
+  "dependencies": {
+    "hono": "^4.8.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250605.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.19.1"
   }
 }

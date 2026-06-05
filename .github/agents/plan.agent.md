@@ -1,5 +1,6 @@
 ---
 description: Analyze the repository, collect necessary information, and create an implementation plan for the specified issue.
+user-invocable: false
 tools:
   [
     "execute",

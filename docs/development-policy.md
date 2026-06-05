@@ -140,6 +140,22 @@ const result = await db.prepare(
 - Minimum 70% code coverage for critical paths
 - Use **Jest** or **Vitest** for testing
 
+### Runtime & Manual Smoke Validation (PR Readiness)
+- Automated readiness requires both commands to pass:
+  - `npm run test`
+  - `npm run test:e2e`
+- Manual runtime startup and smoke validation are required only for infra/config/runtime-touching changes.
+- Infra/config/runtime-touching examples:
+  - Worker runtime/bootstrap/routing changes
+  - `wrangler.toml` or binding/secret handling changes
+  - D1 schema/migration/runtime DB wiring changes
+  - CI/deployment/runtime environment configuration changes
+- For those changes, verify local runtime startup with `npm run dev` and run a minimal manual smoke check:
+  - `GET /`
+  - `POST /bookmarks` with a valid `WRITE_SECRET`
+  - `GET /rss.xml`
+- If required runtime startup or smoke checks fail, stop PR/review readiness work and document actionable blocker details (failing command/path, observed behavior, and immediate next fix).
+
 ### File Naming
 - Test files: `*.test.ts` or `*.spec.ts`
 - Colocate tests near source files
@@ -173,6 +189,10 @@ Closes #123
 - [ ] Error handling is appropriate
 - [ ] Database queries are optimized
 - [ ] Tests are included/updated
+- [ ] `npm run test` passes
+- [ ] `npm run test:e2e` passes
+- [ ] For infra/config/runtime-touching changes: local runtime startup verified with `npm run dev`
+- [ ] For infra/config/runtime-touching changes: manual smoke check verified for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
 - [ ] Documentation is updated
 - [ ] No hardcoded credentials or secrets
 
