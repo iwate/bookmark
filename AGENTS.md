@@ -26,3 +26,8 @@ Build a bookmark web service for @iwate.
 
 * Do not modify or commit `.env*` files
 * Only allow `wrangler setup/dev/d1/websearch` subcommands; no other subcommands permitted
+
+## Tools
+
+- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and DO NOT REQUEST BROADER PERMISSIONS or extra auth scopes.
