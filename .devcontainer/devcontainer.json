@@ -17,6 +17,7 @@
 
 	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/credential)\" > .devcontainer/.env && echo \"TAVILY_API_KEY=$(op read op://Private/TavilyAPI/credential)\" >> .devcontainer/.env",
 	"runArgs": [
+		"--network", "host",
 		"--env-file", "${localWorkspaceFolder}/.devcontainer/.env"
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
