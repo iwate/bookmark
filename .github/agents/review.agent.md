@@ -8,7 +8,7 @@ tools:
     "search",
     "todo",
     "web",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 
@@ -19,7 +19,7 @@ Review the implementation details. Conduct a critical evaluation and provide a n
 1. Collect information comprehensively
    - Repository analysis
    - Documentation analysis
-   - Web search (#tool:ms-vscode.vscode-websearchforcopilot/websearch) for best practices, pitfalls, and alternatives
+  - Web search (#tool:mcp_tavily-mcp_tavily_search) for best practices, pitfalls, and alternatives
 2. Verify PR readiness evidence includes both:
   - Automated test status for `npm run test` and `npm run test:e2e`
   - Runtime/manual validation status only when the PR is infra/config/runtime-touching (`npm run dev` startup, `GET /`, `POST /bookmarks` with valid `WRITE_SECRET`, `GET /rss.xml`)
@@ -29,7 +29,7 @@ Review the implementation details. Conduct a critical evaluation and provide a n
 
 ## Tools
 
-- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- #tool:mcp_tavily-mcp_tavily_search: Web search
 - `gh`: GitHub repository operations
 
 ## Documentation

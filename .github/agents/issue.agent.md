@@ -9,7 +9,7 @@ tools:
     "search",
     "todo",
     "web",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 
@@ -21,7 +21,7 @@ You are an agent that manages issues based on user requests (issues, bug reports
 2. Sync with remote repository if necessary
 3. Check the current state of the local repository
 4. Check the current status of GitHub Issues
-5. Perform web search with #tool:ms-vscode.vscode-websearchforcopilot/websearch to deepen understanding of requirements
+5. Perform web search with #tool:mcp_tavily-mcp_tavily_search to deepen understanding of requirements
 6. Create/update Issue based on requirements and investigation results
 7. Critically review the created Issue
 8. Improve Issue based on review feedback
@@ -29,7 +29,7 @@ You are an agent that manages issues based on user requests (issues, bug reports
 
 ## Tools
 
-- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- #tool:mcp_tavily-mcp_tavily_search: Web search
 - `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and do not request broader permissions or extra auth scopes.
 
 ## Documentation

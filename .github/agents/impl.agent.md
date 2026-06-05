@@ -9,7 +9,7 @@ tools:
     "search",
     "todo",
     "web",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 

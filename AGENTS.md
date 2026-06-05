@@ -32,5 +32,5 @@ Build a bookmark web service for @iwate.
 
 ## Tools
 
-- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- #tool:mcp_tavily-mcp_tavily_search: Web search (use Tavily search)
 - `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and DO NOT REQUEST BROADER PERMISSIONS or extra auth scopes.

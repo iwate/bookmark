@@ -8,7 +8,7 @@ tools:
     "search",
     "todo",
     "web",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 
@@ -35,7 +35,7 @@ If required runtime startup or manual smoke checks fail, do not create the PR. R
 
 ## Tools
 
-- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- #tool:mcp_tavily-mcp_tavily_search: Web search
 - `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and do not request broader permissions or extra auth scopes.
 
 

@@ -6,7 +6,7 @@ tools:
   [
     "agent",
     "todo",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 

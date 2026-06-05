@@ -8,7 +8,7 @@ tools:
     "search",
     "todo",
     "web",
-    "ms-vscode.vscode-websearchforcopilot/websearch",
+    "mcp_tavily-mcp_tavily_search",
   ]
 ---
 
@@ -24,7 +24,7 @@ Create an implementation plan for the given issue.
 
 ## Tools
 
-- #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
+- #tool:mcp_tavily-mcp_tavily_search: Web search
 - `gh`: GitHub repository operations
 
 ## Documentation
