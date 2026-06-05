@@ -30,7 +30,7 @@ You are an agent that manages issues based on user requests (issues, bug reports
 ## Tools
 
 - #tool:ms-vscode.vscode-websearchforcopilot/websearch: Web search
-- `gh`: GitHub repository operations
+- `gh`: GitHub repository operations. Use it only with the existing `GH_TOKEN` already provisioned in the environment, and do not request broader permissions or extra auth scopes.
 
 ## Documentation
 - `docs/`
