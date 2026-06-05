@@ -294,6 +294,288 @@ function createDbMock() {
 
 {
   const mock = createDbMock();
+  const originalFetch = globalThis.fetch;
+  let upstreamFetchCalls = 0;
+
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.startsWith('https://cloudflare-dns.com/dns-query?')) {
+      const dnsUrl = new URL(url);
+      if (dnsUrl.searchParams.get('type') === 'A') {
+        return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 1, data: '93.184.216.34' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/dns-json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/dns-json' },
+      });
+    }
+
+    upstreamFetchCalls += 1;
+    assert.equal(url, 'https://example.com/page');
+    return new Response(
+      '<html><head><meta property="og:title" content="Fetched title"><meta property="og:image" content="/thumb.png"></head></html>',
+      {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      },
+    );
+  }) as typeof fetch;
+
+  try {
+    const response = await app.fetch(
+      new Request('https://example.com/bookmarks/metadata', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com/page' }),
+      }),
+      { DB: mock.db } as never,
+    );
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type') ?? '', /application\/json/i);
+    assert.deepEqual(await response.json(), {
+      title: 'Fetched title',
+      thumbnailUrl: 'https://example.com/thumb.png',
+    });
+    assert.equal(upstreamFetchCalls, 1);
+    assert.equal(mock.calls.prepare, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(
+    new Request('https://example.com/bookmarks/metadata', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'ftp://example.com/page' }),
+    }),
+    { DB: mock.db } as never,
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(await response.text(), 'url must use http or https');
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(
+    new Request('https://example.com/bookmarks/metadata', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'http://127.0.0.1/internal' }),
+    }),
+    { DB: mock.db } as never,
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(await response.text(), 'url host is not allowed');
+}
+
+{
+  const mock = createDbMock();
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.startsWith('https://cloudflare-dns.com/dns-query?')) {
+      const dnsUrl = new URL(url);
+      if (dnsUrl.searchParams.get('type') === 'A') {
+        return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 1, data: '93.184.216.34' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/dns-json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/dns-json' },
+      });
+    }
+
+    return new Response('plain text', {
+      status: 200,
+      headers: { 'content-type': 'text/plain' },
+    });
+  }) as typeof fetch;
+
+  try {
+    const response = await app.fetch(
+      new Request('https://example.com/bookmarks/metadata', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com/plain' }),
+      }),
+      { DB: mock.db } as never,
+    );
+
+    assert.equal(response.status, 422);
+    assert.equal(await response.text(), 'content-type must be text/html');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+{
+  const mock = createDbMock();
+  const originalFetch = globalThis.fetch;
+  let upstreamFetchCalls = 0;
+
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.startsWith('https://cloudflare-dns.com/dns-query?')) {
+      const dnsUrl = new URL(url);
+      if (dnsUrl.searchParams.get('type') === 'A') {
+        return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 1, data: '93.184.216.34' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/dns-json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/dns-json' },
+      });
+    }
+
+    upstreamFetchCalls += 1;
+    return new Response('', {
+      status: 302,
+      headers: { location: 'http://127.0.0.1/private' },
+    });
+  }) as typeof fetch;
+
+  try {
+    const response = await app.fetch(
+      new Request('https://example.com/bookmarks/metadata', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com/start' }),
+      }),
+      { DB: mock.db } as never,
+    );
+
+    assert.equal(response.status, 400);
+    assert.equal(await response.text(), 'url host is not allowed');
+    assert.equal(upstreamFetchCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+{
+  const mock = createDbMock();
+  const response = await app.fetch(
+    new Request('https://example.com/bookmarks/metadata', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'http://[::]/internal' }),
+    }),
+    { DB: mock.db } as never,
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(await response.text(), 'url host is not allowed');
+}
+
+{
+  const mock = createDbMock();
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.startsWith('https://cloudflare-dns.com/dns-query?')) {
+      const dnsUrl = new URL(url);
+      if (dnsUrl.searchParams.get('type') === 'A') {
+        return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 1, data: '93.184.216.34' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/dns-json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/dns-json' },
+      });
+    }
+
+    const timeoutError = new Error('timed out');
+    timeoutError.name = 'TimeoutError';
+    throw timeoutError;
+  }) as typeof fetch;
+
+  try {
+    const response = await app.fetch(
+      new Request('https://example.com/bookmarks/metadata', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com/slow' }),
+      }),
+      { DB: mock.db } as never,
+    );
+
+    assert.equal(response.status, 504);
+    assert.equal(await response.text(), 'upstream timeout');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+{
+  const mock = createDbMock();
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.startsWith('https://cloudflare-dns.com/dns-query?')) {
+      const dnsUrl = new URL(url);
+      if (dnsUrl.searchParams.get('type') === 'A') {
+        return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 1, data: '93.184.216.34' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/dns-json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ Status: 0, Answer: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/dns-json' },
+      });
+    }
+
+    return new Response('<html><head><title>too large</title></head></html>', {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': String(256 * 1024 + 1),
+      },
+    });
+  }) as typeof fetch;
+
+  try {
+    const response = await app.fetch(
+      new Request('https://example.com/bookmarks/metadata', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com/too-large' }),
+      }),
+      { DB: mock.db } as never,
+    );
+
+    assert.equal(response.status, 422);
+    assert.equal(await response.text(), 'response too large');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+{
+  const mock = createDbMock();
   const response = await app.fetch(
     new Request('https://example.com/bookmarks/1/update', {
       method: 'POST',

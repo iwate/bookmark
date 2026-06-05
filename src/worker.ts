@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { BookmarkInput, ValidationError } from './utils/validation.ts';
 import { validateBookmarkInput } from './utils/validation.ts';
 import { createBookmark, deleteBookmarkById, listBookmarks, updateBookmarkById, type D1DatabaseLike } from './lib/bookmark-store.ts';
+import { fetchPageMetadata, mapMetadataError } from './lib/metadata.ts';
 import { renderIndexPage, renderRssFeed } from './lib/render.ts';
 
 type Env = {
@@ -10,6 +11,7 @@ type Env = {
 };
 
 type FormPayload = BookmarkInput & { secret?: string };
+type MetadataPayload = { url: string };
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -121,6 +123,26 @@ async function readPayload(request: Request): Promise<FormPayload> {
   };
 }
 
+async function readMetadataPayload(request: Request): Promise<MetadataPayload> {
+  const contentType = (request.headers.get('content-type') ?? '').toLowerCase();
+  if (!contentType.includes('application/json')) {
+    throw new BadRequestError('unsupported content type');
+  }
+
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch {
+    throw new BadRequestError('invalid request body');
+  }
+
+  if (!isPlainObject(json)) {
+    throw new BadRequestError('invalid request body');
+  }
+
+  return { url: String(json.url ?? '') };
+}
+
 function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values?: FormPayload, errors = []) {
   return renderIndexPage({
     bookmarks,
@@ -222,6 +244,30 @@ app.get('/rss.xml', async (c) => {
     });
   } catch {
     return c.text('internal server error', 500);
+  }
+});
+
+app.post('/bookmarks/metadata', async (c) => {
+  if (isDisallowedWriteRequest(c.req.raw, c.req.url)) {
+    return c.text('forbidden', 403);
+  }
+
+  let payload: MetadataPayload;
+  try {
+    payload = await readMetadataPayload(c.req.raw);
+  } catch (error) {
+    if (error instanceof BadRequestError) {
+      return c.text(error.message, 400);
+    }
+    return c.text('invalid request body', 400);
+  }
+
+  try {
+    const metadata = await fetchPageMetadata(payload.url);
+    return c.json(metadata);
+  } catch (error) {
+    const mapped = mapMetadataError(error);
+    return c.text(mapped.message, mapped.status);
   }
 });
 
