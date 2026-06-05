@@ -7,14 +7,15 @@
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/devcontainers/features/github-cli:1.1.0": {}
+		"ghcr.io/devcontainers/features/github-cli:1.1.0": {},
+		"ghcr.io/jungaretti/features/ripgrep:1": {}
 	},
 
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
-	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/credential)\" > .devcontainer/.env",
+	"initializeCommand": "mkdir -p .devcontainer/.envcache && echo \"GH_TOKEN=$(op read op://Private/GH_TOKEN_BOOKMARK/credential)\" > .devcontainer/.env && echo \"TAVILY_API_KEY=$(op read op://Private/TavilyAPI/credential)\" >> .devcontainer/.env",
 	"runArgs": [
 		"--env-file", "${localWorkspaceFolder}/.devcontainer/.env"
 	],
@@ -23,8 +24,15 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"ms-vscode.vscode-websearchforcopilot"
-			]
+			],
+			"mcp": {
+				"servers": {
+					"tavily-mcp": {
+						"command": "npx",
+						"args": ["-y", "tavily-mcp@latest"]
+					}
+				}
+			}
 		}
 	}
 
