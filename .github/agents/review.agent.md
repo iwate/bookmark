@@ -20,8 +20,12 @@ Review the implementation details. Conduct a critical evaluation and provide a n
    - Repository analysis
    - Documentation analysis
    - Web search (#tool:ms-vscode.vscode-websearchforcopilot/websearch) for best practices, pitfalls, and alternatives
-2. Critically evaluate the implementation based on collected information (accuracy, completeness, consistency, validity, appropriateness, relevance, clarity, objectivity, bias, readability, maintainability, etc.)
-3. Identify improvements or concerns and present an action plan
+2. Verify PR readiness evidence includes both:
+  - Automated test status
+  - Runtime/manual validation status (`npm run dev` startup, `GET /`, `POST /bookmarks` with valid `WRITE_SECRET`, `GET /rss.xml`)
+3. Critically evaluate the implementation based on collected information (accuracy, completeness, consistency, validity, appropriateness, relevance, clarity, objectivity, bias, readability, maintainability, etc.)
+4. Identify improvements or concerns and present an action plan
+5. If runtime/manual validation is missing or failing, mark as not-ready and report actionable blocker details separately from test feedback
 
 ## Tools
 

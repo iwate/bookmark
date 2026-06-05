@@ -140,6 +140,15 @@ const result = await db.prepare(
 - Minimum 70% code coverage for critical paths
 - Use **Jest** or **Vitest** for testing
 
+### Runtime & Manual Smoke Validation (PR Readiness)
+- Automated tests and coverage are required, but they are not sufficient for PR readiness.
+- Before requesting review, verify local runtime startup succeeds with `npm run dev`.
+- Before requesting review, run a minimal manual smoke check of key MVP paths:
+  - `GET /`
+  - `POST /bookmarks` with a valid `WRITE_SECRET`
+  - `GET /rss.xml`
+- If runtime startup or smoke checks fail, stop PR/review readiness work and document actionable blocker details (failing command/path, observed behavior, and immediate next fix).
+
 ### File Naming
 - Test files: `*.test.ts` or `*.spec.ts`
 - Colocate tests near source files
@@ -173,6 +182,8 @@ Closes #123
 - [ ] Error handling is appropriate
 - [ ] Database queries are optimized
 - [ ] Tests are included/updated
+- [ ] Local runtime startup verified with `npm run dev`
+- [ ] Manual smoke check verified for `GET /`, `POST /bookmarks` (valid `WRITE_SECRET`), and `GET /rss.xml`
 - [ ] Documentation is updated
 - [ ] No hardcoded credentials or secrets
 

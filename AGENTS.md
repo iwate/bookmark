@@ -21,6 +21,8 @@ Build a bookmark web service for @iwate.
 * `docs/development-policy.md`: Coding standards, branching strategy, commit message conventions
 * `docs/testing-policy.md`: Testing strategy, coverage targets
 * `docs/review-policy.md`: Code review criteria, checklists
+* Review/PR readiness requires both automated tests and runtime/manual validation (`npm run dev` startup, `GET /`, `POST /bookmarks` with valid `WRITE_SECRET`, `GET /rss.xml`)
+* If runtime/manual validation fails, stop PR creation and report actionable blocker details
 
 ## Boundaries
 

@@ -35,6 +35,15 @@ src/
 - Run tests with coverage: `npm test -- --coverage`
 - Watch mode: `npm test -- --watch`
 
+### Runtime Startup & Manual Smoke Validation
+- Automated tests verify behavior under test conditions; they do not replace runtime/manual validation.
+- Before PR creation or review request, confirm local runtime startup with `npm run dev`.
+- Before PR creation or review request, perform a minimal manual smoke check of key MVP paths:
+  - `GET /`
+  - `POST /bookmarks` with a valid `WRITE_SECRET`
+  - `GET /rss.xml`
+- If runtime startup or smoke checks fail, stop PR readiness work and report actionable blocker details (failed command/path, observed error, and next fix).
+
 ## Test Coverage Requirements
 
 ### Minimum Coverage Thresholds
