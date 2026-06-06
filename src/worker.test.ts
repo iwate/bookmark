@@ -127,7 +127,7 @@ function createDbMock() {
   assert.ok(html.includes('formmethod="post"'));
   assert.ok(html.includes('formnovalidate'));
   assert.equal((html.match(/<form\b/g) ?? []).length, 1);
-  assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
+  assert.equal((html.match(/name="password"/g) ?? []).length, 1);
   assert.ok(html.includes('Cancel edit'));
 }
 
@@ -191,7 +191,7 @@ function createDbMock() {
         url: 'https://example.com/updated',
         thumbnailUrl: 'https://example.com/updated.png',
         comment: 'updated',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -213,7 +213,7 @@ function createDbMock() {
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -234,7 +234,7 @@ function createDbMock() {
         url: 'invalid',
         thumbnailUrl: '',
         comment: '',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -254,7 +254,7 @@ function createDbMock() {
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
-        secret: 'wrong-secret',
+        password: 'wrong-secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -282,7 +282,7 @@ function createDbMock() {
         url: 'https://example.com/updated',
         thumbnailUrl: '',
         comment: '',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -604,7 +604,7 @@ function createDbMock() {
     new Request('https://example.com/bookmarks/1/delete', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: 'secret' }),
+      body: new URLSearchParams({ password: 'secret' }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
   );
@@ -619,7 +619,7 @@ function createDbMock() {
     new Request('https://example.com/bookmarks/404/delete', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: 'secret' }),
+      body: new URLSearchParams({ password: 'secret' }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
   );
@@ -634,7 +634,7 @@ function createDbMock() {
     new Request('https://example.com/bookmarks/1/delete', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: 'wrong-secret' }),
+      body: new URLSearchParams({ password: 'wrong-secret' }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
   );
@@ -656,7 +656,7 @@ function createDbMock() {
     new Request('https://example.com/bookmarks/1/delete', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: 'secret' }),
+      body: new URLSearchParams({ password: 'secret' }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
   );
@@ -671,7 +671,7 @@ function createDbMock() {
     new Request('https://example.com/bookmarks', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ url: 'https://example.com', secret: 'wrong' }),
+      body: new URLSearchParams({ url: 'https://example.com', password: 'wrong' }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
   );
@@ -831,7 +831,7 @@ function createDbMock() {
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },
@@ -853,7 +853,7 @@ function createDbMock() {
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: '' },
@@ -889,7 +889,7 @@ function createDbMock() {
         url: 'https://example.com',
         thumbnailUrl: 'https://example.com/thumb.png',
         comment: 'nice',
-        secret: 'secret',
+        password: 'secret',
       }),
     }),
     { DB: mock.db, WRITE_SECRET: 'secret' },

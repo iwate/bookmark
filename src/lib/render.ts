@@ -165,8 +165,8 @@ export function renderIndexPage(input: RenderPageInput): string {
             <textarea name="comment">${escapeHtml(values.comment)}</textarea>
           </label>
           <label>
-            Secret
-            <input type="password" name="secret" required value="${escapeHtml(values.secret)}">
+            Password
+            <input type="password" name="password" required value="${escapeHtml(values.secret)}">
           </label>
           <div class="form-actions">
             <button type="submit">${submitLabel}</button>

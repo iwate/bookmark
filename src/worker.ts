@@ -10,7 +10,7 @@ type Env = {
   WRITE_SECRET: string;
 };
 
-type FormPayload = BookmarkInput & { secret?: string };
+type FormPayload = BookmarkInput & { password?: string };
 type MetadataPayload = { url: string };
 
 const app = new Hono<{ Bindings: Env }>();
@@ -99,7 +99,7 @@ async function readPayload(request: Request): Promise<FormPayload> {
       thumbnailUrl: String(json.thumbnailUrl ?? ''),
       comment: String(json.comment ?? ''),
       title: String(json.title ?? ''),
-      secret: String(json.secret ?? ''),
+      password: String(json.password ?? ''),
     };
   }
 
@@ -119,7 +119,7 @@ async function readPayload(request: Request): Promise<FormPayload> {
     thumbnailUrl: String(data.get('thumbnailUrl') ?? ''),
     comment: String(data.get('comment') ?? ''),
     title: String(data.get('title') ?? ''),
-    secret: String(data.get('secret') ?? ''),
+    password: String(data.get('password') ?? ''),
   };
 }
 
@@ -291,10 +291,10 @@ app.post('/bookmarks', async (c) => {
     return c.text('invalid request body', 400);
   }
 
-  if (!c.env.WRITE_SECRET || payload.secret !== c.env.WRITE_SECRET) {
+  if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
       const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPage(bookmarks, payload, [{ field: 'secret', message: 'is invalid' }]), 403);
+      return c.html(renderPage(bookmarks, payload, [{ field: 'password', message: 'is invalid' }]), 403);
     } catch {
       return c.text('internal server error', 500);
     }
@@ -343,7 +343,7 @@ app.post('/bookmarks/:id/update', async (c) => {
     return c.text('invalid request body', 400);
   }
 
-  if (!c.env.WRITE_SECRET || payload.secret !== c.env.WRITE_SECRET) {
+  if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
       const bookmarks = await listBookmarks(c.env.DB);
       return c.html(renderPageWithEditor(bookmarks, bookmarkId, payload, [{ field: 'secret', message: 'is invalid' }]), 403);
@@ -398,7 +398,7 @@ app.post('/bookmarks/:id/delete', async (c) => {
     return c.text('invalid request body', 400);
   }
 
-  if (!c.env.WRITE_SECRET || payload.secret !== c.env.WRITE_SECRET) {
+  if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
       const bookmarks = await listBookmarks(c.env.DB);
       return c.html(renderPageWithEditor(bookmarks, bookmarkId, undefined, [{ field: 'secret', message: 'is invalid' }]), 403);

@@ -97,7 +97,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
   assert.ok(html.includes('must be a valid URL'));
   assert.ok(html.includes('is invalid'));
   assert.equal((html.match(/<form\b/g) ?? []).length, 1);
-  assert.equal((html.match(/name="secret"/g) ?? []).length, 1);
+  assert.equal((html.match(/name="password"/g) ?? []).length, 1);
   assert.ok(!html.includes('should-not-appear'));
 }
 
