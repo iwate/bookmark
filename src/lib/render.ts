@@ -69,9 +69,10 @@ function renderBookmark(bookmark: Bookmark): string {
 
   return `
     <li class="bookmark">
-      <p class="bookmark-title">${escapeHtml(displayTitle)}</p>
-      <a class="bookmark-url" href="${escapeHtml(bookmark.url)}" rel="noreferrer">${escapeHtml(bookmark.url)}</a>
       ${thumbnail}
+      <p class="bookmark-title">
+        <a class="bookmark-url" href="${escapeHtml(bookmark.url)}" target="_blank" rel="noreferrer">${escapeHtml(displayTitle)}</a>
+      </p>
       ${comment}
       <time datetime="${escapeHtml(bookmark.createdAt)}">${escapeHtml(formatDate(bookmark.createdAt))}</time>
       <p class="bookmark-action-wrap">
@@ -125,14 +126,14 @@ export function renderIndexPage(input: RenderPageInput): string {
       .metadata-status.error { color: #b91c1c; }
       .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
       .bookmark { display: grid; gap: 0.65rem; }
-      .bookmark-title { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+      .bookmark-title { grid-column: span 2; margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
-      .bookmark-action-wrap { margin: 0; text-align: right; }
+      .bookmark-action-wrap { grid-column: span 1; margin: 0; text-align: right; }
       .bookmark-action { color: #1f2937; font-weight: 700; }
       .cancel-edit { color: #1f2937; font-weight: 700; }
-      img { max-width: 100%; height: auto; border-radius: 0.5rem; }
-      .comment { margin: 0; white-space: pre-wrap; }
-      time { color: #6b7280; font-size: 0.92rem; }
+      img { grid-column: span 2; max-width: 100%; height: auto; border-radius: 0.5rem; }
+      .comment { grid-column: span 2; margin: 0; white-space: pre-wrap; }
+      time { grid-column: span 1; color: #6b7280; font-size: 0.92rem; }
       @media (max-width: 640px) { main { padding-inline: 0.75rem; } h1 { font-size: 1.7rem; } }
     </style>
   </head>
