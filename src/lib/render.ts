@@ -192,19 +192,6 @@ export function renderIndexPage(input: RenderPageInput): string {
       </section>
     </main>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-              console.log('SW registered: ', registration);
-            })
-            .catch(error => {
-              console.error('SW registration failed: ', error);
-            });
-        });
-      }
-    </script>
-    <script>
       (() => {
         const form = document.querySelector('#editor form');
         if (!(form instanceof HTMLFormElement)) {
@@ -291,7 +278,7 @@ export function renderIndexPage(input: RenderPageInput): string {
           void fetchMetadata();
         });
 
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(globalThis.location?.search ?? '');
         const sharedUrl 
           = searchParams.get('url') 
           ?? searchParams.get('text')
@@ -305,6 +292,19 @@ export function renderIndexPage(input: RenderPageInput): string {
           setStatus('', false);
         });
       })();
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(error => {
+              console.error('SW registration failed: ', error);
+            });
+        });
+      }
     </script>
   </body>
 </html>`;
