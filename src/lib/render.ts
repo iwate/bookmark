@@ -102,6 +102,8 @@ export function renderIndexPage(input: RenderPageInput): string {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>きになるなるなる</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#333333">
     <style>
       :root { color-scheme: light; }
       body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #f5f1e8; color: #1f2937; }
@@ -190,12 +192,25 @@ export function renderIndexPage(input: RenderPageInput): string {
       </section>
     </main>
     <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(error => {
+              console.error('SW registration failed: ', error);
+            });
+        });
+      }
+    </script>
+    <script>
       (() => {
         const form = document.querySelector('#editor form');
         if (!(form instanceof HTMLFormElement)) {
           return;
         }
-
+        
         const urlInput = form.querySelector('input[name="url"]');
         const titleInput = form.querySelector('input[name="title"]');
         const thumbnailInput = form.querySelector('input[name="thumbnailUrl"]');
@@ -275,6 +290,16 @@ export function renderIndexPage(input: RenderPageInput): string {
         urlInput.addEventListener('blur', () => {
           void fetchMetadata();
         });
+
+        const searchParams = new URLSearchParams(location.search);
+        const sharedUrl 
+          = searchParams.get('url') 
+          ?? searchParams.get('text')
+          ?? searchParams.get('title');
+        if (sharedUrl && sharedUrl.startsWith('https://')) {
+          urlInput.value = sharedUrl;
+          void fetchMetadata();
+        }
 
         form.addEventListener('submit', () => {
           setStatus('', false);
