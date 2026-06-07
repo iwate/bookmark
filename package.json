@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "dev": "wrangler d1 migrations apply bookmark --local && wrangler dev src/worker.ts",
-    "deploy": "wrangler d1 migrations apply bookmark && wrangler deploy --config wrangler.prod.toml"
+    "deploy": "wrangler d1 migrations apply bookmark --remote --config wrangler.prod.toml && wrangler deploy --config wrangler.prod.toml"
   },
   "dependencies": {
     "hono": "^4.8.5"
