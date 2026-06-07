@@ -3,6 +3,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
 {
   const html = renderIndexPage({
+    page: 0,
     bookmarks: [
       {
         id: 1,
@@ -36,6 +37,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
 {
   const html = renderIndexPage({
+    page: 0,
     bookmarks: [
       {
         id: 7,
@@ -58,6 +60,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 
 {
   const html = renderIndexPage({
+    page: 0,
     bookmarks: [
       {
         id: 9,
@@ -102,7 +105,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 }
 
 {
-  const html = renderIndexPage({ bookmarks: [] });
+  const html = renderIndexPage({ page: 0, bookmarks: [] });
   assert.ok(html.includes('id="metadata-status"'));
   assert.ok(html.includes("fetch('/bookmarks/metadata'"));
   assert.ok(html.includes('Metadata fetch failed. You can continue with manual input.'));
@@ -110,7 +113,7 @@ import { renderIndexPage, renderRssFeed } from './render.ts';
 }
 
 {
-  const html = renderIndexPage({ bookmarks: [] });
+  const html = renderIndexPage({ page: 0, bookmarks: [] });
   const scriptMatch = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/i);
   assert.ok(scriptMatch, 'page should include inline metadata script');
 

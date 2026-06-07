@@ -13,6 +13,8 @@ type Env = {
 type FormPayload = BookmarkInput & { password?: string };
 type MetadataPayload = { url: string };
 
+const PAGE_SIZE = 20;
+
 const app = new Hono<{ Bindings: Env }>();
 
 class BadRequestError extends Error {
@@ -143,8 +145,9 @@ async function readMetadataPayload(request: Request): Promise<MetadataPayload> {
   return { url: String(json.url ?? '') };
 }
 
-function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values?: FormPayload, errors = []) {
+function renderPage(page: number, bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values?: FormPayload, errors = []) {
   return renderIndexPage({
+    page,
     bookmarks,
     values: {
       url: values?.url ?? '',
@@ -158,6 +161,7 @@ function renderPage(bookmarks: Awaited<ReturnType<typeof listBookmarks>>, values
 }
 
 function renderPageWithEditor(
+  page: number,
   bookmarks: Awaited<ReturnType<typeof listBookmarks>>,
   entryId: number,
   payload: FormPayload | undefined,
@@ -173,6 +177,7 @@ function renderPageWithEditor(
   };
 
   return renderIndexPage({
+    page,
     bookmarks,
     values: {
       url: '',
@@ -196,21 +201,24 @@ app.get('/', async (c) => {
     return configError;
   }
 
+  const page = Number(new URL(c.req.url).searchParams.get('page') ?? '0');
+
   try {
-    const bookmarks = await listBookmarks(c.env.DB);
+    const bookmarks = await listBookmarks(c.env.DB, page, PAGE_SIZE);
     const rawEditId = new URL(c.req.url).searchParams.get('edit');
     const editId = rawEditId ? parseBookmarkId(rawEditId) : null;
     if (editId === null) {
-      return c.html(renderPage(bookmarks));
+      return c.html(renderPage(page, bookmarks));
     }
 
     const entry = bookmarks.find((bookmark) => bookmark.id === editId);
     if (!entry) {
-      return c.html(renderPage(bookmarks));
+      return c.html(renderPage(page, bookmarks));
     }
 
     return c.html(
       renderIndexPage({
+        page,
         bookmarks,
         editor: {
           id: entry.id,
@@ -237,7 +245,7 @@ app.get('/rss.xml', async (c) => {
   }
 
   try {
-    const bookmarks = await listBookmarks(c.env.DB);
+    const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
     const siteUrl = new URL(c.req.url).origin;
     return c.text(renderRssFeed(bookmarks, siteUrl), 200, {
       'Content-Type': 'application/rss+xml; charset=utf-8',
@@ -293,8 +301,8 @@ app.post('/bookmarks', async (c) => {
 
   if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
-      const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPage(bookmarks, payload, [{ field: 'password', message: 'is invalid' }]), 403);
+      const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
+      return c.html(renderPage(0,bookmarks, payload, [{ field: 'password', message: 'is invalid' }]), 403);
     } catch {
       return c.text('internal server error', 500);
     }
@@ -303,8 +311,8 @@ app.post('/bookmarks', async (c) => {
   const result = validateBookmarkInput(payload);
   if (!result.ok) {
     try {
-      const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPage(bookmarks, payload, result.errors), 400);
+      const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
+      return c.html(renderPage(0, bookmarks, payload, result.errors), 400);
     } catch {
       return c.text('internal server error', 500);
     }
@@ -345,8 +353,8 @@ app.post('/bookmarks/:id/update', async (c) => {
 
   if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
-      const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPageWithEditor(bookmarks, bookmarkId, payload, [{ field: 'secret', message: 'is invalid' }]), 403);
+      const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
+      return c.html(renderPageWithEditor(0, bookmarks, bookmarkId, payload, [{ field: 'secret', message: 'is invalid' }]), 403);
     } catch {
       return c.text('internal server error', 500);
     }
@@ -355,8 +363,8 @@ app.post('/bookmarks/:id/update', async (c) => {
   const result = validateBookmarkInput(payload);
   if (!result.ok) {
     try {
-      const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPageWithEditor(bookmarks, bookmarkId, payload, result.errors), 400);
+      const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
+      return c.html(renderPageWithEditor(0, bookmarks, bookmarkId, payload, result.errors), 400);
     } catch {
       return c.text('internal server error', 500);
     }
@@ -400,8 +408,8 @@ app.post('/bookmarks/:id/delete', async (c) => {
 
   if (!c.env.WRITE_SECRET || payload.password !== c.env.WRITE_SECRET) {
     try {
-      const bookmarks = await listBookmarks(c.env.DB);
-      return c.html(renderPageWithEditor(bookmarks, bookmarkId, undefined, [{ field: 'secret', message: 'is invalid' }]), 403);
+      const bookmarks = await listBookmarks(c.env.DB, 0, PAGE_SIZE);
+      return c.html(renderPageWithEditor(0, bookmarks, bookmarkId, undefined, [{ field: 'secret', message: 'is invalid' }]), 403);
     } catch {
       return c.text('internal server error', 500);
     }

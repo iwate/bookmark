@@ -56,7 +56,7 @@ function createDbMock() {
     };
   };
 
-  const bookmarks = await listBookmarks(mock.db);
+  const bookmarks = await listBookmarks(mock.db, 0, 10);
 
   assert.equal(mock.calls.prepare, 1);
   assert.equal(mock.calls.all, 1);

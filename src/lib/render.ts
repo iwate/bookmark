@@ -2,6 +2,7 @@ import type { Bookmark } from './bookmarks.ts';
 import type { ValidationError } from '../utils/validation.ts';
 
 type RenderPageInput = {
+  page: number;
   bookmarks: Bookmark[];
   errors?: ValidationError[];
   values?: {
@@ -124,7 +125,7 @@ export function renderIndexPage(input: RenderPageInput): string {
       .errors { margin: 0; padding-left: 1.2rem; color: #b91c1c; }
       .metadata-status { margin: 0; color: #6b7280; min-height: 1.25rem; }
       .metadata-status.error { color: #b91c1c; }
-      .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+      .bookmarks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
       .bookmark { display: grid; gap: 0.65rem; }
       .bookmark-title { grid-column: span 2; margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
       .bookmark-url { font-weight: 700; overflow-wrap: anywhere; }
@@ -134,6 +135,7 @@ export function renderIndexPage(input: RenderPageInput): string {
       img { grid-column: span 2; max-width: 100%; height: auto; border-radius: 0.5rem; }
       .comment { grid-column: span 2; margin: 0; white-space: pre-wrap; }
       time { grid-column: span 1; color: #6b7280; font-size: 0.92rem; }
+      .pagination { display: flex; gap: 0.5rem; padding-left: 0; list-style: none; justify-content: center; }
       @media (max-width: 640px) { main { padding-inline: 0.75rem; } h1 { font-size: 1.7rem; } }
     </style>
   </head>
@@ -191,6 +193,13 @@ export function renderIndexPage(input: RenderPageInput): string {
           ${input.bookmarks.map((bookmark) => renderBookmark(bookmark)).join('') || '<li>No bookmarks yet.</li>'}
         </ol>
       </section>
+      <nav aria-label="Pagination">
+        <ul class="pagination">
+          ${input.page > 0 ? `<li><a href="/?page=${input.page - 1}" aria-label="Previous page">&lt;</a></li>` : ''}
+          <li><span>p.${input.page + 1}</span></li>
+          ${input.bookmarks.length > 0 ? `<li><a href="/?page=${input.page + 1}" aria-label="Next page">&gt;</a></li>` : ''}
+        </ul>
+      </nav>
     </main>
     <script>
       (() => {

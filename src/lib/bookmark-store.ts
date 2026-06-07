@@ -14,6 +14,7 @@ const BOOKMARK_SELECT_SQL = `
   SELECT id, url, title, thumbnail_url, comment, created_at
   FROM bookmarks
   ORDER BY created_at DESC, id DESC
+  LIMIT ? OFFSET ?
 `;
 
 const BOOKMARK_INSERT_SQL = `
@@ -46,8 +47,9 @@ function getChanges(result: unknown): number | null {
   return typeof changes === 'number' ? changes : null;
 }
 
-export async function listBookmarks(db: D1DatabaseLike): Promise<Bookmark[]> {
-  const result = await db.prepare(BOOKMARK_SELECT_SQL).bind().all<BookmarkRecord>();
+export async function listBookmarks(db: D1DatabaseLike, page: number, pageSize: number): Promise<Bookmark[]> {
+  const offset = page * pageSize;
+  const result = await db.prepare(BOOKMARK_SELECT_SQL).bind(pageSize, offset).all<BookmarkRecord>();
   return (result.results ?? []).map(toBookmark);
 }
 
