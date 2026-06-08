@@ -312,9 +312,12 @@ async function readLimitedText(response: Response, maxBytes: number): Promise<st
     }
     total += value.byteLength;
     if (total > maxBytes) {
-      throw new MetadataHttpError(422, 'response too large');
+      chunks.push(value.subarray(0, value.byteLength - (total - maxBytes)));
+      break;
     }
-    chunks.push(value);
+    else {
+      chunks.push(value);
+    }
   }
 
   const merged = new Uint8Array(total);
@@ -400,12 +403,6 @@ export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string
     const contentType = response.headers.get('content-type') ?? '';
     if (!isHtmlResponse(contentType)) {
       throw new MetadataHttpError(422, 'content-type must be text/html');
-    }
-
-    const contentLengthRaw = response.headers.get('content-length');
-    const contentLength = contentLengthRaw ? Number(contentLengthRaw) : NaN;
-    if (Number.isFinite(contentLength) && contentLength > MAX_RESPONSE_BYTES) {
-      throw new MetadataHttpError(422, 'response too large');
     }
 
     const html = await readLimitedText(response, MAX_RESPONSE_BYTES);
