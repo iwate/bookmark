@@ -338,9 +338,9 @@ export function renderRssFeed(bookmarks: Bookmark[], siteUrl: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Bookmarks</title>
+    <title>きになるなるなる</title>
     <link>${escapeXml(siteUrl)}</link>
-    <description>Newest saved bookmarks</description>
+    <description>@iwate's bookmarks</description>
     ${items}
   </channel>
 </rss>`;
