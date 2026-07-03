@@ -1,39 +1,95 @@
 import assert from 'node:assert/strict';
 import { assertSafeFetchTarget, extractMetadataFromHtml, fetchPageMetadata } from './metadata.ts';
 
+class TestElement {
+  private readonly attrs: Record<string, string>;
+
+  constructor(attrs: Record<string, string>) {
+    this.attrs = attrs;
+  }
+
+  getAttribute(name: string): string | null {
+    return this.attrs[name] ?? null;
+  }
+}
+
+type TextHandler = { text(text: { text: string }): void };
+type ElementHandler = { element(element: TestElement): void };
+
+class TestHtmlRewriter {
+  private handlers = new Map<string, TextHandler | ElementHandler>();
+
+  on(selector: string, handler: TextHandler | ElementHandler): TestHtmlRewriter {
+    this.handlers.set(selector, handler);
+    return this;
+  }
+
+  transform(response: Response): { arrayBuffer(): Promise<ArrayBuffer> } {
+    return {
+      arrayBuffer: async (): Promise<ArrayBuffer> => {
+        const html = await response.text();
+
+        const titleHandler = this.handlers.get('.entry-title *') as TextHandler | undefined;
+        if (titleHandler) {
+          const titleMatch = html.match(/<[^>]*class=["'][^"']*\bentry-title\b[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/i);
+          if (titleMatch) {
+            const textContent = (titleMatch[1] ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+            if (textContent) {
+              titleHandler.text({ text: textContent });
+            }
+          }
+        }
+
+        const thumbHandler = this.handlers.get('img.thumb') as ElementHandler | undefined;
+        if (thumbHandler) {
+          const imgMatch = html.match(/<img\b[^>]*class=["'][^"']*\bthumb\b[^"']*["'][^>]*>/i);
+          if (imgMatch) {
+            const srcMatch = imgMatch[0].match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+            const src = srcMatch?.[1] ?? srcMatch?.[2] ?? srcMatch?.[3] ?? '';
+            thumbHandler.element(new TestElement({ src }));
+          }
+        }
+
+        return new ArrayBuffer(0);
+      },
+    };
+  }
+}
+
+globalThis.HTMLRewriter = TestHtmlRewriter as unknown as typeof HTMLRewriter;
+
 {
   const html = `
     <html>
-      <head>
-        <meta property="og:title" content="OG title">
-        <meta property="og:image" content="/og.png">
-        <title>Fallback title</title>
-      </head>
+      <body>
+        <h1 class="entry-title"><a href="/post">OG title</a></h1>
+        <img class="thumb" src="https://example.com/images/og.png">
+      </body>
     </html>
   `;
-  const metadata = extractMetadataFromHtml(html, 'https://example.com/path');
+  const metadata = await extractMetadataFromHtml(new Response(html));
   assert.equal(metadata.title, 'OG title');
-  assert.equal(metadata.thumbnailUrl, 'https://example.com/og.png');
+  assert.equal(metadata.thumbnailUrl, 'og.png');
 }
 
 {
   const html = `
     <html>
-      <head>
-        <title>Fallback title</title>
-        <meta property="og:image:url" content="https://cdn.example.com/og.png">
-      </head>
+      <body>
+        <h2 class="entry-title">Fallback title</h2>
+        <img class="thumb" src="https://cdn.example.com/cover%20image.jpg">
+      </body>
     </html>
   `;
-  const metadata = extractMetadataFromHtml(html, 'https://example.com/path');
+  const metadata = await extractMetadataFromHtml(new Response(html));
   assert.equal(metadata.title, 'Fallback title');
-  assert.equal(metadata.thumbnailUrl, 'https://cdn.example.com/og.png');
+  assert.equal(metadata.thumbnailUrl, 'cover image.jpg');
 }
 
 {
-  const html = '<html><head><title>Only title</title></head></html>';
-  const metadata = extractMetadataFromHtml(html, 'https://example.com/path');
-  assert.equal(metadata.title, 'Only title');
+  const html = '<html><body><p>Only body text</p></body></html>';
+  const metadata = await extractMetadataFromHtml(new Response(html));
+  assert.equal(metadata.title, '');
   assert.equal(metadata.thumbnailUrl, '');
 }
 
@@ -154,8 +210,9 @@ import { assertSafeFetchTarget, extractMetadataFromHtml, fetchPageMetadata } fro
   }) as typeof fetch;
 
   try {
-    await assert.rejects(fetchPageMetadata('https://example.com/mixed-answer-types'), /failed to resolve upstream host/);
-    assert.equal(upstreamFetchCalls, 0);
+    const metadata = await fetchPageMetadata('https://example.com/mixed-answer-types');
+    assert.deepEqual(metadata, { title: '', thumbnailUrl: '' });
+    assert.equal(upstreamFetchCalls, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -223,7 +280,8 @@ import { assertSafeFetchTarget, extractMetadataFromHtml, fetchPageMetadata } fro
   }) as typeof fetch;
 
   try {
-    await assert.rejects(fetchPageMetadata('https://example.com/too-large-header'), /response too large/);
+    const metadata = await fetchPageMetadata('https://example.com/too-large-header');
+    assert.deepEqual(metadata, { title: '', thumbnailUrl: '' });
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -264,7 +322,8 @@ import { assertSafeFetchTarget, extractMetadataFromHtml, fetchPageMetadata } fro
   }) as typeof fetch;
 
   try {
-    await assert.rejects(fetchPageMetadata('https://example.com/too-large-stream'), /response too large/);
+    const metadata = await fetchPageMetadata('https://example.com/too-large-stream');
+    assert.deepEqual(metadata, { title: '', thumbnailUrl: '' });
   } finally {
     globalThis.fetch = originalFetch;
   }
