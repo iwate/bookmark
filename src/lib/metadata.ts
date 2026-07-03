@@ -168,22 +168,22 @@ async function resolveDnsRecords(hostname: string, recordType: 'A' | 'AAAA'): Pr
       signal: AbortSignal.timeout(DNS_TIMEOUT_MS),
     });
   } catch {
-    throw new MetadataHttpError(502, 'failed to resolve upstream host');
+    throw new MetadataHttpError(502, 'failed to resolve upstream host 0');
   }
 
   if (!response.ok) {
-    throw new MetadataHttpError(502, 'failed to resolve upstream host');
+    throw new MetadataHttpError(502, 'failed to resolve upstream host 1');
   }
 
   let body: DnsJsonResponse;
   try {
     body = (await response.json()) as DnsJsonResponse;
   } catch {
-    throw new MetadataHttpError(502, 'failed to resolve upstream host');
+    throw new MetadataHttpError(502, 'failed to resolve upstream host 2');
   }
 
   if (typeof body.Status === 'number' && body.Status !== 0 && body.Status !== 3) {
-    throw new MetadataHttpError(502, 'failed to resolve upstream host');
+    throw new MetadataHttpError(502, 'failed to resolve upstream host 3');
   }
 
   const expectedType = recordType === 'A' ? 1 : 28;
@@ -192,20 +192,20 @@ async function resolveDnsRecords(hostname: string, recordType: 'A' | 'AAAA'): Pr
 
   for (const answer of answers) {
     if (answer.type !== expectedType || typeof answer.data !== 'string') {
-      throw new MetadataHttpError(502, 'failed to resolve upstream host');
+      continue;
     }
 
     const data = answer.data.trim().toLowerCase();
     if (!data) {
-      throw new MetadataHttpError(502, 'failed to resolve upstream host');
+      throw new MetadataHttpError(502, 'failed to resolve upstream host 5');
     }
 
     if (recordType === 'A' && !isIpv4(data)) {
-      throw new MetadataHttpError(502, 'failed to resolve upstream host');
+      throw new MetadataHttpError(502, 'failed to resolve upstream host 6');
     }
 
     if (recordType === 'AAAA' && parseIpv6ToBigInt(data) === null) {
-      throw new MetadataHttpError(502, 'failed to resolve upstream host');
+      throw new MetadataHttpError(502, 'failed to resolve upstream host 7');
     }
 
     addresses.push(data);
@@ -378,9 +378,12 @@ export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string
       if (error instanceof Error && error.name === 'TimeoutError') {
         throw new MetadataHttpError(504, 'upstream timeout');
       }
+      console.error('Error fetching page metadata:', error);
       throw new MetadataHttpError(502, 'failed to fetch upstream url');
     }
 
+
+      console.log('metadata:', response.status, response.statusText);
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');
       if (!location) {
@@ -403,7 +406,7 @@ export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string
     const contentType = response.headers.get('content-type') ?? '';
     if (!isHtmlResponse(contentType)) {
       throw new MetadataHttpError(422, 'content-type must be text/html');
-    }
+    }    
 
     const html = await readLimitedText(response, MAX_RESPONSE_BYTES);
     return extractMetadataFromHtml(html, currentUrl.toString());
