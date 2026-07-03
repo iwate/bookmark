@@ -293,61 +293,29 @@ function isHtmlResponse(contentType: string): boolean {
   return lower.includes('text/html') || lower.includes('application/xhtml+xml');
 }
 
-async function readLimitedText(response: Response, maxBytes: number): Promise<string> {
-  if (!response.body) {
-    return '';
-  }
 
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-    if (!value) {
-      continue;
-    }
-    total += value.byteLength;
-    if (total > maxBytes) {
-      chunks.push(value.subarray(0, value.byteLength - (total - maxBytes)));
-      break;
-    }
-    else {
-      chunks.push(value);
-    }
-  }
-
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return new TextDecoder().decode(merged);
-}
-
-export function extractMetadataFromHtml(html: string, pageUrl: string): { title: string; thumbnailUrl: string } {
-  const ogTitle = extractFirstMetaContent(html, 'property', 'og:title');
-  const title = (ogTitle || extractTitleTag(html)).trim();
-
-  const ogImage = extractFirstMetaContent(html, 'property', 'og:image') || extractFirstMetaContent(html, 'property', 'og:image:url');
+export async function extractMetadataFromHtml(res: Response): Promise<{ title: string; thumbnailUrl: string }> {
+  let title = '';
   let thumbnailUrl = '';
-  if (ogImage) {
-    try {
-      thumbnailUrl = new URL(ogImage, pageUrl).toString();
-    } catch {
-      thumbnailUrl = '';
-    }
-  }
+  await new HTMLRewriter()
+      .on(".entry-title *", {
+        text(text) {
+          title += text.text?.trim() || '';
+        }
+      })
+      .on("img.thumb", {
+        element(element) {
+          const src = element.getAttribute('src') || '';
+          thumbnailUrl = decodeURIComponent(src.split('/').at(-1) || '');
+        }
+      })
+      .transform(res)
+      .arrayBuffer();
 
   return { title, thumbnailUrl };
 }
 
-export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string; thumbnailUrl: string }> {
+export async function fetchPageMetadata(rawUrl: string, requestHeaders?: HeadersInit): Promise<{ title: string; thumbnailUrl: string }> {
   const trimmedUrl = rawUrl.trim();
   if (!trimmedUrl) {
     throw new MetadataHttpError(400, 'url is required');
@@ -355,66 +323,46 @@ export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string
 
   throwUrlValidationError(validateHttpUrl(trimmedUrl, 'url'));
 
-  let currentUrl = new URL(trimmedUrl);
+  let currentUrl = new URL('https://hatenablog-parts.com/embed');
+  currentUrl.searchParams.set('url', trimmedUrl);
 
-  for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-    assertSafeFetchTarget(currentUrl);
-    await assertSafeResolvedFetchTarget(currentUrl);
+  assertSafeFetchTarget(currentUrl);
+  await assertSafeResolvedFetchTarget(currentUrl);
 
-    const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+  const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
 
-    let response: Response;
-    try {
-      response = await fetch(currentUrl.toString(), {
-        method: 'GET',
-        redirect: 'manual',
-        headers: {
-          accept: 'text/html,application/xhtml+xml',
-          'user-agent': 'bookmark-metadata-bot/1.0',
-        },
-        signal,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
-        throw new MetadataHttpError(504, 'upstream timeout');
-      }
-      throw new MetadataHttpError(502, 'failed to fetch upstream url');
+  let response: Response;
+  try {
+    response = await fetch(currentUrl.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        ...requestHeaders,
+      },
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new MetadataHttpError(504, 'upstream timeout');
     }
-
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      if (!location) {
-        throw new MetadataHttpError(502, 'upstream redirect missing location');
-      }
-      if (redirects === MAX_REDIRECTS) {
-        throw new MetadataHttpError(502, 'too many redirects:' + currentUrl.toString() + ' -> ' + location);
-      }
-
-      currentUrl = new URL(location, currentUrl);
-      throwUrlValidationError(validateHttpUrl(currentUrl.toString(), 'url'));
-      assertSafeFetchTarget(currentUrl);
-      continue;
-    }
-
-    if (!response.ok) {
-      throw new MetadataHttpError(502, `upstream returned status ${response.status}`);
-    }
-
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!isHtmlResponse(contentType)) {
-      throw new MetadataHttpError(422, 'content-type must be text/html');
-    }    
-
-    const html = await readLimitedText(response, MAX_RESPONSE_BYTES);
-    return extractMetadataFromHtml(html, currentUrl.toString());
+    throw new MetadataHttpError(502, 'failed to fetch upstream url (1)' + (error instanceof Error ? `: ${error.message}` : ''));
   }
 
-  throw new MetadataHttpError(502, 'too many redirects');
+  if (!response.ok) {
+    throw new MetadataHttpError(502, `upstream returned status ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!isHtmlResponse(contentType)) {
+    throw new MetadataHttpError(422, 'content-type must be text/html');
+  }    
+
+  return await extractMetadataFromHtml(response);
 }
 
 export function mapMetadataError(error: unknown): { status: number; message: string } {
   if (error instanceof MetadataHttpError) {
     return { status: error.status, message: error.message };
   }
-  return { status: 502, message: 'failed to fetch upstream url' };
+  return { status: 502, message: 'failed to fetch upstream url (2)' };
 }

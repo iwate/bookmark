@@ -271,7 +271,9 @@ app.post('/bookmarks/metadata', async (c) => {
   }
 
   try {
-    const metadata = await fetchPageMetadata(payload.url);
+    const metadata = await fetchPageMetadata(payload.url, {
+      'User-Agent': c.req.raw.headers.get('user-agent') ?? 'bookmark-worker/1.0',
+    });
     return c.json(metadata);
   } catch (error) {
     const mapped = mapMetadataError(error);
