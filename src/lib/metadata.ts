@@ -378,19 +378,16 @@ export async function fetchPageMetadata(rawUrl: string): Promise<{ title: string
       if (error instanceof Error && error.name === 'TimeoutError') {
         throw new MetadataHttpError(504, 'upstream timeout');
       }
-      console.error('Error fetching page metadata:', error);
       throw new MetadataHttpError(502, 'failed to fetch upstream url');
     }
 
-
-      console.log('metadata:', response.status, response.statusText);
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');
       if (!location) {
         throw new MetadataHttpError(502, 'upstream redirect missing location');
       }
       if (redirects === MAX_REDIRECTS) {
-        throw new MetadataHttpError(502, 'too many redirects');
+        throw new MetadataHttpError(502, 'too many redirects:' + currentUrl.toString() + ' -> ' + location);
       }
 
       currentUrl = new URL(location, currentUrl);
